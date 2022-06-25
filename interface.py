@@ -27,6 +27,7 @@ class App(QtWidgets.QMainWindow, qt_ui.Ui_MainWindow):
         self.downloadButton.clicked.connect(self.downloadPressed)
     
     def downloadPressed(self):
+        # Check for valid url?
         self.ytDownloader.url = self.urlInput.text()
         self.urlInput.clear()
         self.ytDownloader.download()

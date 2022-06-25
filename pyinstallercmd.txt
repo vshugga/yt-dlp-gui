@@ -1,3 +1,0 @@
-pyinstaller -F -w --icon="icon.ico" [app].py 
-
-pyuic5 -x main.ui -o qt_ui.py
