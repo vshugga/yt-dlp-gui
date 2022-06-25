@@ -1,3 +1,4 @@
+# Old implementation
 '''
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow

@@ -32,7 +32,7 @@ class YtDownloader():
 			'ignoreerrors': True,
 			'format': 'bestaudio/best',
 			'overwrites': False,
-			'download_archive': 'downloaded.txt',
+			'download_archive': './logs/downloaded.txt',
 			'outtmpl': self.song_path + '/%(title)s-%(id)s.%(ext)s',
 			'postprocessors': [{
     		    'key': 'FFmpegExtractAudio',
@@ -44,13 +44,13 @@ class YtDownloader():
 		}
 
 	def download(self):
-		with open('downloaded.txt', 'w') as down_file:
+		with open('./logs/downloaded.txt', 'w') as down_file:
 			down_file.writelines(self.down_list)
 
 		with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:
 			ydl.download([self.url])
 
-		with open('errors.txt', 'w') as err_file:
+		with open('./logs/errors.txt', 'w') as err_file:
 			print(f"[info] Download completed with {len(self.logger.errors)} errors")
 			err_file.writelines(self.logger.errors)
 			print("[info] Errors written to errors.txt")
