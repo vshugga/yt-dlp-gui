@@ -55,9 +55,7 @@ class YtDownloader():
 			err_file.writelines(self.logger.errors)
 			print("[info] Errors written to errors.txt")
 
-
-
-
+			
 # CLI 
 '''
 def get_info():
