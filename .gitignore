@@ -1,9 +1,13 @@
 __pycache__/
-test/
-dist/
+.vscode/
 build/
+dist/
 logs/*
+test/
 
 *.txt
 *.spec
 *.ui
+*.sh
+interfaceold.py
+qt_ui.py

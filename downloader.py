@@ -1,63 +1,75 @@
 import yt_dlp
 import os
 
-class YtLogger():
-	def __init__(self):
-		self.errors = []
 
-	def debug(self, msg):
-		if msg.startswith('[download]'):
-			print(msg, end='\r')
-		else:
-			print(msg)
+class YtLogger:
+    def __init__(self):
+        self.errors = []
 
-	def warning(self, msg):
-		print(msg)
+    def debug(self, msg):
+        if msg.startswith("[download]"):
+            print(msg, end="\r")
+        else:
+            print(msg)
 
-	def error(self, msg):
-		self.errors.append(msg + '\n')
-		print(msg)
+    def warning(self, msg):
+        print(msg)
 
-
-class YtDownloader():
-	def __init__(self):
-		self.song_path = './test'
-		self.url = 'PLGGWD1U8JhR1q2gxsUZjryZuJl-_xv7XU'
-		self.file_list = os.listdir(self.song_path)
-		self.down_list = ['youtube ' + line[-15:-4] + '\n' for line in self.file_list] # REVISE/REMOVE
-		self.logger = YtLogger()
+    def error(self, msg):
+        self.errors.append(msg + "\n")
+        print(msg)
 
 
-		self.ydl_opts = {
-			'ignoreerrors': True,
-			'format': 'bestaudio/best',
-			'overwrites': False,
-			'download_archive': './logs/downloaded.txt',
-			'outtmpl': self.song_path + '/%(title)s-%(id)s.%(ext)s',
-			'postprocessors': [{
+class YtDownloader:
+    def __init__(self):
+        self.song_path = "."
+        self.url = ""
+        self.file_list = os.listdir(self.song_path)
+        self.down_list = [
+            "youtube " + line[-15:-4] + "\n" for line in self.file_list   # REVISE/REMOVE   
+        ]  
+        self.logger = YtLogger()
+
+
+        # YoutubeDL Options
+        self.ignoreerrors = True
+        self.format = 'bestaudio/best'
+        self.overwrites = False
+        self.download_archive = './logs/downloaded.txt'
+        self.output_template = '/%(title)s-%(id)s.%(ext)s'
+        self.postprocessors = [{
     		    'key': 'FFmpegExtractAudio',
     		    'preferredcodec': 'vorbis',
     		    'preferredquality': '192',
-    		}],
+    		}]
+
+    def download(self):
+
+        ydl_opts = {
+			'ignoreerrors': self.ignoreerrors,
+			'format': self.format,
+			'overwrites': self.overwrites,
+			'download_archive': self.download_archive,
+			'outtmpl': self.song_path + self.output_template,
+			'postprocessors': self.postprocessors,
 			'logger': self.logger,
 			#'progress_hooks': [yt_hook],
 		}
 
-	def download(self):
-		with open('./logs/downloaded.txt', 'w') as down_file:
-			down_file.writelines(self.down_list)
+        with open("./logs/downloaded.txt", "w") as down_file:
+            down_file.writelines(self.down_list)
 
-		with yt_dlp.YoutubeDL(self.ydl_opts) as ydl:
-			ydl.download([self.url])
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([self.url])
 
-		with open('./logs/errors.txt', 'w') as err_file:
-			print(f"[info] Download completed with {len(self.logger.errors)} errors")
-			err_file.writelines(self.logger.errors)
-			print("[info] Errors written to errors.txt")
+        with open("./logs/errors.txt", "w") as err_file:
+            print(f"[info] Download completed with {len(self.logger.errors)} errors")
+            err_file.writelines(self.logger.errors)
+            print("[info] Errors written to errors.txt")
 
-			
-# CLI 
-'''
+
+# CLI
+"""
 def get_info():
 	p_opts = ''.join([f'{key}: {value}\n' for key, value in ydl_opts.items()])
 
@@ -127,10 +139,10 @@ while True:
 
 	else:
 		print(f"'{npt}' is not an option. Use 'h' for a list of options.")
-'''
+"""
 
 # HOOKS
-'''
+"""
 # Output sizes
 progbar_len = 10
 max_name_len = 50
@@ -157,20 +169,16 @@ def yt_hook(hook):
 		
 		print('[Downloading]', name, ':', str(dbytes) + '/' + str(tbytes), prog_str, end='\r')
 		
-'''		
-		
-
-#-ciwx:
-#-c continue - force resume partially downloaded files
-#-i ignore errors# - NOT WORKING - DOWNLOAD STOPS ON ERROR
-#-w no overwrites#
-#-x extract audio#
-#-o path and file#
-
-#OUTPUT ERRORS TO ERRORS.TXT
-#USE LOGGER
-#CREATE CLI WHERE THESE OPTIONS CAN BE CHANGED
+"""
 
 
+# -ciwx:
+# -c continue - force resume partially downloaded files
+# -i ignore errors# - NOT WORKING - DOWNLOAD STOPS ON ERROR
+# -w no overwrites#
+# -x extract audio#
+# -o path and file#
 
-
+# OUTPUT ERRORS TO ERRORS.TXT
+# USE LOGGER
+# CREATE CLI WHERE THESE OPTIONS CAN BE CHANGED
