@@ -25,47 +25,69 @@ class YtDownloader:
         self.song_path = "."
         self.url = ""
         self.file_list = os.listdir(self.song_path)
-        self.down_list = [
-            "youtube " + line[-15:-4] + "\n" for line in self.file_list   # REVISE/REMOVE   
-        ]  
+        #self.down_list = [
+        #    "youtube " + line[-15:-4] + "\n" for line in self.file_list   # REVISE/REMOVE   
+        #]  
         self.logger = YtLogger()
 
 
         # YoutubeDL Options
-        self.ignoreerrors = True
+        self.ignore_errors = True
+        self.record_errors = False
         self.format = 'bestaudio/best'
         self.overwrites = False
         self.download_archive = './logs/downloaded.txt'
         self.output_template = '/%(title)s-%(id)s.%(ext)s'
-        self.postprocessors = [{
-    		    'key': 'FFmpegExtractAudio',
-    		    'preferredcodec': 'vorbis',
-    		    'preferredquality': '192',
-    		}]
+        self.write_thumbnail = True
+        
+        # Postprocessors
+        self.postprocessors = []
+        self.extract_audio = True
+        self.audio_codec = 'vorbis'
+        self.audio_quality = '192'
+        self.embed_thumbnail = True
+
+
 
     def download(self):
 
+        if self.extract_audio:
+            self.postprocessors.append({
+    		    'key': 'FFmpegExtractAudio',
+    		    'preferredcodec': 'vorbis',
+    		    'preferredquality': '192',
+    	    })
+        if self.embed_thumbnail:
+            self.postprocessors.append({
+                'key': 'EmbedThumbnail'
+            })
+
         ydl_opts = {
-			'ignoreerrors': self.ignoreerrors,
+			'ignoreerrors': self.ignore_errors,
 			'format': self.format,
 			'overwrites': self.overwrites,
 			'download_archive': self.download_archive,
 			'outtmpl': self.song_path + self.output_template,
+            'writethumbnail': self.write_thumbnail,
 			'postprocessors': self.postprocessors,
 			'logger': self.logger,
 			#'progress_hooks': [yt_hook],
 		}
-
+        
+        # Possibly revise scanning preexisting downloads
+        '''
         with open("./logs/downloaded.txt", "w") as down_file:
             down_file.writelines(self.down_list)
+        '''
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([self.url])
 
-        with open("./logs/errors.txt", "w") as err_file:
-            print(f"[info] Download completed with {len(self.logger.errors)} errors")
-            err_file.writelines(self.logger.errors)
-            print("[info] Errors written to errors.txt")
+        if self.record_errors:
+            with open("./logs/errors.txt", "w") as err_file:
+                print(f"[info] Download completed with {len(self.logger.errors)} errors")
+                err_file.writelines(self.logger.errors)
+                print("[info] Errors written to errors.txt")
 
 
 # CLI

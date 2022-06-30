@@ -18,7 +18,6 @@ class App(QMainWindow):
         # Check for valid url?
         self.ytDownloader.url = self.urlInput.text()
         self.ytDownloader.song_path = self.pathInput.text()
-        self.ytDownloader
 
         self.urlInput.clear()
         self.ytDownloader.download()
