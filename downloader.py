@@ -22,22 +22,18 @@ class YtLogger:
 
 class YtDownloader:
     def __init__(self):
-        self.song_path = "."
+        self.song_path = ""
         self.url = ""
-        self.file_list = os.listdir(self.song_path)
-        #self.down_list = [
-        #    "youtube " + line[-15:-4] + "\n" for line in self.file_list   # REVISE/REMOVE   
-        #]  
         self.logger = YtLogger()
-
 
         # YoutubeDL Options
         self.ignore_errors = True
-        self.record_errors = False
+        self.skip_archived = True # Skip archived downloads
         self.format = 'bestaudio/best'
-        self.overwrites = False
-        self.download_archive = './logs/downloaded.txt'
+        self.download_archive = './logs/download_archive.txt' # If not empty, record downloads
+        self.error_log = './logs/error_log.txt'
         self.output_template = '/%(title)s-%(id)s.%(ext)s'
+        self.add_metadata = True
         self.write_thumbnail = True
         
         # Postprocessors
@@ -48,8 +44,7 @@ class YtDownloader:
         self.embed_thumbnail = True
 
 
-
-    def download(self):
+    def download(self, lock):
 
         if self.extract_audio:
             self.postprocessors.append({
@@ -57,16 +52,22 @@ class YtDownloader:
     		    'preferredcodec': 'vorbis',
     		    'preferredquality': '192',
     	    })
+        if self.add_metadata:
+            self.postprocessors.append({
+                'key': 'FFmpegMetadata', 'add_metadata': 'True'
+            })
         if self.embed_thumbnail:
             self.postprocessors.append({
                 'key': 'EmbedThumbnail'
             })
 
+        
+
         ydl_opts = {
 			'ignoreerrors': self.ignore_errors,
 			'format': self.format,
-			'overwrites': self.overwrites,
-			'download_archive': self.download_archive,
+			#'overwrites': self.overwrites,
+			#'download_archive': self.download_archive,
 			'outtmpl': self.song_path + self.output_template,
             'writethumbnail': self.write_thumbnail,
 			'postprocessors': self.postprocessors,
@@ -74,20 +75,48 @@ class YtDownloader:
 			#'progress_hooks': [yt_hook],
 		}
         
-        # Possibly revise scanning preexisting downloads
+        # Scanning preexisting downloads to update downloaded.txt
         '''
+        self.file_list = os.listdir(self.song_path)
+        self.down_list = [
+            "youtube " + line[-15:-4] + "\n" for line in self.file_list   # REVISE/REMOVE   
+        ] 
+
         with open("./logs/downloaded.txt", "w") as down_file:
             down_file.writelines(self.down_list)
         '''
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([self.url])
+            try:
+                info_dict = ydl.extract_info(self.url, download=False)
+                if not info_dict:
+                    raise Exception('No info was gathered.')
 
-        if self.record_errors:
-            with open("./logs/errors.txt", "w") as err_file:
+                extractor = info_dict['extractor']
+                video_id = info_dict['id']
+
+                if self.skip_archived:
+                    with open(self.download_archive, "r") as d_file:
+                        d_list = d_file.readlines()
+                    if f'{extractor} {video_id}' in d_list:
+                        print(f'{info_dict["title"]} is already recorded in the archive.')
+                        return
+
+                ydl.download(self.url)
+            except Exception as e:
+                print(f'yt-dlp error: {e}')
+                return
+
+        if self.download_archive:
+            with open(self.download_archive, "w") as d_file:
+                d_file.writelines(f'{extractor} {video_id}')
+                print(f"[info] Downloads written to {self.download_archive}")
+
+        if self.error_log:
+            with open(self.error_log, "w") as err_file:
                 print(f"[info] Download completed with {len(self.logger.errors)} errors")
                 err_file.writelines(self.logger.errors)
-                print("[info] Errors written to errors.txt")
+                print(f"[info] Errors written to {self.error_log}")
 
 
 # CLI

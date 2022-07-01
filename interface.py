@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
+from multiprocessing import Process, Lock
 import sys
 import downloader
 
@@ -14,13 +15,21 @@ class App(QMainWindow):
         self.downloadButton.clicked.connect(self.download_pressed)
         self.pathButton.clicked.connect(self.path_pressed)
 
+
     def download_pressed(self):
         # Check for valid url?
         self.ytDownloader.url = self.urlInput.text()
         self.ytDownloader.song_path = self.pathInput.text()
 
         self.urlInput.clear()
-        self.ytDownloader.download()
+
+        # Use multiple YTDL instances for downloads (May cause problems writing to log files)
+        # join() voids the purpose of multiprocessing, possibly run in downloader instead?
+        lock = Lock()
+        yt_process = Process(target=self.ytDownloader.download, args=(lock,)) 
+        yt_process.start()
+        # yt_process.join()
+        
 
     def path_pressed(self):
         dialog = QFileDialog(self)
