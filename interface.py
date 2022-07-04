@@ -19,15 +19,22 @@ class App(QMainWindow):
     def download_pressed(self):
         # Check for valid url?
         self.ytDownloader.url = self.urlInput.text()
+        self.urlInput.clear()
+
         self.ytDownloader.song_path = self.pathInput.text()
 
-        self.urlInput.clear()
 
         # Use multiple YTDL instances for downloads (May cause problems writing to log files)
         # join() voids the purpose of multiprocessing, possibly run in downloader instead?
+
+        # TODO: Download archive includes playlist url instead of individual vids
         lock = Lock()
-        yt_process = Process(target=self.ytDownloader.download, args=(lock,)) 
-        yt_process.start()
+        download = self.ytDownloader.get_info()
+        print(f'DOWNLOAD: {download}')
+        if download:
+            for url in download:
+                yt_process = Process(target=self.ytDownloader.download, args=(url, lock,)) 
+                yt_process.start()
         # yt_process.join()
         
 
