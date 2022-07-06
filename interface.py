@@ -1,6 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
-from multiprocessing import Process, Lock
 import sys
 import downloader
 
@@ -23,20 +22,18 @@ class App(QMainWindow):
 
         self.ytDownloader.song_path = self.pathInput.text()
 
+        # Possibly make new instance
+        self.ytDownloader.download()
 
         # Use multiple YTDL instances for downloads (May cause problems writing to log files)
         # join() voids the purpose of multiprocessing, possibly run in downloader instead?
 
         # TODO: Download archive includes playlist url instead of individual vids
-        lock = Lock()
-        download = self.ytDownloader.get_info()
-        print(f'DOWNLOAD: {download}')
-        if download:
-            for url in download:
-                yt_process = Process(target=self.ytDownloader.download, args=(url, lock,)) 
-                yt_process.start()
+        
         # yt_process.join()
         
+    def start_download():
+        self.ytDownloader.download()
 
     def path_pressed(self):
         dialog = QFileDialog(self)
