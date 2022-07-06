@@ -72,7 +72,7 @@ class YtDownloader:
             lock = Lock()
 
             # THIS PART SHOULD USE THREADING LIMIT (Add the next process as each is finished)
-            processes = [Process(target=self.__download, args=(v_id, lock,)) for v_id in ids_final]
+            processes = [Process(target=self.__download, args=([v_id], lock,)) for v_id in ids_final]
 
             for p in processes:
                 #yt_process = Process(target=self.__download, args=(v_id, lock,)) 
@@ -87,18 +87,17 @@ class YtDownloader:
         self.write_errors()
 
 
-
-    def __download(self, url, lock=None):
+    def __download(self, ids, lock=None):
         try:
             ydl_opts = self.get_options()
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download(url)
+                ydl.download(ids)
 
             if lock is None:
-                self.write_download(url)
+                self.write_download(ids)
                 return
             lock.acquire()
-            self.write_download(url)
+            self.write_download(ids)
             lock.release()
             
 
@@ -107,11 +106,12 @@ class YtDownloader:
             return False
 
 
-    def write_download(self, vid_id):
+    def write_download(self, ids):
         try:
             with open(self.download_archive, "a") as d_file:
-                d_file.writelines(f'{vid_id}\n')
-                print(f"[info] Downloads written to {self.download_archive}")
+                for v_id in ids: 
+                    d_file.writelines(f'{v_id}\n')
+                    print(f"[info] Downloads written to {self.download_archive}")
         except Exception as e:
             print(f'Download archive exception: {e}')
 
@@ -189,8 +189,6 @@ if __name__ == '__main__':
     ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
     ytdl.song_path =  './test/download'
     ytdl.download()
-    #print(ytdl.get_info())
-
     # Call download:
     # Check if video or playlist
 
