@@ -1,18 +1,23 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget
 import sys
 import downloader
 
 
-class App(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self):
-        super(App, self).__init__()
+        super(MainWindow, self).__init__()
         uic.loadUi("main.ui", self)
-
         self.ytDownloader = downloader.YtDownloader()
+
+        self.downloadTable.setColumnWidth(0,293)
+        for i in range(1,5):
+            self.downloadTable.setColumnWidth(i,111)
+
 
         self.downloadButton.clicked.connect(self.download_pressed)
         self.pathButton.clicked.connect(self.path_pressed)
+
 
 
     def download_pressed(self):
@@ -32,8 +37,10 @@ class App(QMainWindow):
         
         # yt_process.join()
         
+
     def start_download():
         self.ytDownloader.download()
+
 
     def path_pressed(self):
         dialog = QFileDialog(self)
@@ -48,13 +55,19 @@ class App(QMainWindow):
         if dir_name:
             self.pathInput.setText(dir_name)
 
+    def update_table():
+        pass
+        #self.downloadTable.
+        #QTableWidget.
 
 def main():
     app = QApplication(sys.argv)
-    form = App()
+    form = MainWindow()
     form.show()
-    app.exec_()
-
+    try:
+        app.exec_()
+    except:
+        print('Exiting')
 
 if __name__ == "__main__":
     main()
