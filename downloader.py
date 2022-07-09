@@ -2,6 +2,8 @@ import yt_dlp
 import os
 from multiprocessing import Process, Lock
 
+import json
+
 class YtLogger:
     def __init__(self):
         self.errors = []
@@ -11,7 +13,8 @@ class YtLogger:
             print(msg, end="\r")
         else:
             print(msg)
-
+#with open('plistinfogeneric.json', 'w') as haha:
+    #    json.dump(info_dict, haha)
     def warning(self, msg):
         print(msg)
 
@@ -25,6 +28,8 @@ class YtDownloader:
         self.song_path = ""
         self.url = ""
         self.logger = YtLogger()
+        self.table_updater = None
+        
         self.vid_id = None
         self.do_threading = True
 
@@ -32,8 +37,8 @@ class YtDownloader:
         self.ignore_errors = True
         self.skip_archived = True # Skip archived downloads
         self.format = 'bestaudio/best'
-        self.download_archive = './logs/download_archive.txt' # If not empty, record downloads
-        self.error_log = './logs/error_log.txt'
+        self.download_archive = '' #'./logs/download_archive.txt' If not empty, record downloads
+        self.error_log = './logs/error_log.txt' # If not empty, record errors
         self.output_template = '/%(title)s-%(id)s.%(ext)s'
         self.add_metadata = True
         self.write_thumbnail = True
@@ -46,31 +51,43 @@ class YtDownloader:
         self.embed_thumbnail = True
 
 
-    def download(self):
+    def request_download(self, url):
+        self.url = url
+        lock = Lock()
+        download_process = Process(target=self.download, args=(lock,)) 
+        download_process.start()
+
+
+    def download(self, lock):
         info_dict = self.get_info()
         if not info_dict:
             print('No urls returned by get_info!')
             return 
 
         if info_dict['extractor'] == 'youtube:tab':
-            vids = [(entry['id'], entry['title']) for entry in info_dict['entries']]
+            v_ids = [(entry['id'], entry['title']) for entry in info_dict['entries']]
         else:
-            vids = [(info_dict['id'], info_dict['title'])]
+            v_ids = [(info_dict['id'], info_dict['title'])]
 
+
+        # NEEDS REWRITTEN TO TRIGGER WHEN NOT ARCHIVING
         ids_final = []
-        if self.skip_archived:
+        if self.skip_archived and self.download_archive:
             with open(self.download_archive, "r") as d_file:
                 d_list = d_file.readlines()
-            for v_id, title in vids:
+            for v_id, title in v_ids:
                 if f'{v_id}\n' in d_list:
                     print(f'[info] ID: {v_id} already recorded in the archive; {title}')
                     continue
                 ids_final.append(v_id)
+        else:
+            ids_final = [v_id for v_id, title in v_ids]
         
+        # Possible one liner for statement above
+        #ids_final = [v_id for v_id, title in v_ids if f'{v_id}\n' not in d_list]
+
 
         if self.do_threading:
-            lock = Lock()
-
             # THIS PART SHOULD USE THREADING LIMIT (Add the next process as each is finished)
             processes = [Process(target=self.__download, args=([v_id], lock,)) for v_id in ids_final]
 
@@ -83,7 +100,10 @@ class YtDownloader:
                 p.join()
         else:
             self.__download(ids_final)
-            
+        
+        if not self.error_log:
+            return
+
         self.write_errors()
 
 
@@ -93,9 +113,12 @@ class YtDownloader:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download(ids)
 
+            if not self.download_archive:
+                return
             if lock is None:
                 self.write_download(ids)
                 return
+
             lock.acquire()
             self.write_download(ids)
             lock.release()
@@ -119,12 +142,11 @@ class YtDownloader:
     def write_errors(self):
         try:
             n_errs = len(self.logger.errors)
-            print(f"[info] Download completed with {n_errs} errors")
             if n_errs < 1:
                 return 
             with open(self.error_log, "a") as err_file:
                 err_file.writelines(self.logger.errors)
-                print(f"[info] Errors written to {self.error_log}")
+                print(f"[info] {n_errs} errors written to {self.error_log}")
         except Exception as e:
             print(f'Error log exception: {e}')
 
@@ -155,7 +177,7 @@ class YtDownloader:
             'writethumbnail': self.write_thumbnail,
 			'postprocessors': self.postprocessors,
 			'logger': self.logger,
-			#'progress_hooks': [yt_hook],
+			'progress_hooks': [self.yt_hook]
         }
 
         return ydl_opts  
@@ -180,15 +202,50 @@ class YtDownloader:
             except Exception as e:
                 print(f'Info extraction error: {e}')
                 return False
-            
+    
+    # Update table with needed info
+    def yt_hook(self, hook):
+        if self.table_updater is None:
+            print('Table update method not set!')
+            return
+
+        info = hook['info_dict']
+        table_data = [{
+            'title':info['title'],
+            'size':hook["_total_bytes_str"],
+            'eta':'TEST ETA',
+            'speed':'TEST SPEED',
+            'elapsed':hook['_elapsed_str'],
+            'downloaded':hook['downloaded_bytes'],
+            'status':hook['status'],
+            'completion':hook['_percent_str']
+        }]
+
+        update_table = Process(target=self.table_updater, args=([table_data],))
+        update_table.start()
+        self.table_updater(table_data)
+
+        #table_process = Process(target=self.table_updater, args=([table_data]))
+        #table_process.start()
+
+        #with open('hook_data.json', 'w') as file:
+        #    json.dump(hook, file)
+        #return hook['status']
+
+
+
 
 # For testing without UI
 if __name__ == '__main__':
 
     ytdl = YtDownloader()
     ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
+    ytdl.url = '9edByCiaLbY'
     ytdl.song_path =  './test/download'
     ytdl.download()
+
+    
+
     # Call download:
     # Check if video or playlist
 
@@ -207,32 +264,3 @@ with open("./logs/downloaded.txt", "w") as down_file:
     down_file.writelines(self.down_list)
 '''
         
-
-# HOOKS
-
-'''
-progbar_len = 10
-max_name_len = 50
-
-def yt_hook(hook):
-	if hook['status'] == 'finished':
-		
-		print('[Finished downloading]', hook['filename'])
-		print('[Converting...]', end='\r')
-		
-
-	elif hook['status'] == 'downloading':
-		
-		dbytes = hook['downloaded_bytes']
-		tbytes = hook['total_bytes']
-		name = hook['filename']
-		
-		bar = progbar_len * dbytes // tbytes
-		space = progbar_len - bar
-		prog_str = '['+'#'*bar+' '*space+']'
-		
-		if len(name) > max_name_len:
-			name = name[:max_name_len-3] + '...'
-		
-		print('[Downloading]', name, ':', str(dbytes) + '/' + str(tbytes), prog_str, end='\r')
-'''

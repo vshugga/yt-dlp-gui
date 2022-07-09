@@ -129,17 +129,32 @@
     </column>
     <column>
      <property name="text">
-      <string>Completion</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
       <string>ETA</string>
      </property>
     </column>
     <column>
      <property name="text">
       <string>Speed</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Elapsed</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Downloaded</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Status</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Completion</string>
      </property>
     </column>
    </widget>

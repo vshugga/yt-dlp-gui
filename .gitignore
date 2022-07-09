@@ -4,3 +4,7 @@ build/
 dist/
 logs/*
 test/
+
+*.sh
+interface_test.py
+qt_ui.py
