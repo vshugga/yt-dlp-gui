@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget
-from multiprocessing import Process, Lock
+#from multiprocessing import Process, Lock
 import sys
 import downloader
 
@@ -23,18 +23,14 @@ class MainWindow(QMainWindow):
 
 
     def download_pressed(self):
-        # Check for valid url?
         url = self.urlInput.text()
         self.urlInput.clear()
 
         self.ytDownloader.song_path = self.pathInput.text()
-        self.ytDownloader.request_download(url) # Possibly make new instance?
+        self.ytDownloader.start_download_thread(url) # Possibly make new instance?
 
+        #self.ytDownloader.thread_test()
         
-        
-        #self.ytDownloader.download()
-        
-
 
     def path_pressed(self):
         dialog = QFileDialog(self)
@@ -49,36 +45,30 @@ class MainWindow(QMainWindow):
         if dir_name:
             self.pathInput.setText(dir_name)
 
-    def update_table(self, table_data):
 
-        '''
-        if self.table_updater is None:
-            print('Table update method not set!')
-            return
+    # Update download table
+    # Give each download a row ID?
+    def update_table(self, hook):
 
-        info = hook['info_dict']
         table_data = [{
-            'title':info['title'],
+            'title':hook['info_dict']['title'],
             'size':hook["_total_bytes_str"],
-            'eta':'TEST ETA',
-            'speed':'TEST SPEED',
+            'eta':hook['eta'],
+            'speed':hook['speed'],
             'elapsed':hook['_elapsed_str'],
             'downloaded':hook['downloaded_bytes'],
             'status':hook['status'],
             'completion':hook['_percent_str']
         }]
-        '''
 
-        # Why is update table called but setting rowcount doesn't work?
-        print('Update table')
-        self.downloadTable.setRowCount(1) # Why doesn't this work?
+        #print('Update table:', table_data)
+        #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1) # Why doesn't this work?
 
-        '''
         self.downloadTable.setRowCount(len(table_data))
         for row, row_dict in enumerate(table_data):
             for col, key in enumerate(row_dict.keys()):
-                self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(row_dict[key]))
-        '''
+                self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(str(row_dict[key])))
+        
 
 
 def main():
@@ -118,18 +108,3 @@ if __name__ == "__main__":
 
         #rowCount = self.ui.downloadTable.rowCount()
 
-
-# Old implementation
-"""
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from qt_ui import Ui_MainWindow
-
-app = QApplication(sys.argv)
-window = QMainWindow()
-ui = Ui_MainWindow()
-ui.setupUi(window)
-
-window.show()
-sys.exit(app.exec_())
-"""

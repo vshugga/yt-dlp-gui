@@ -1,7 +1,7 @@
 import yt_dlp
 import os
-from multiprocessing import Process, Lock
-
+#from multiprocessing import Process, Lock
+from threading import Thread, Lock
 import json
 
 class YtLogger:
@@ -27,11 +27,12 @@ class YtDownloader:
     def __init__(self):
         self.song_path = ""
         self.url = ""
-        self.logger = YtLogger()
-        self.table_updater = None
-        
         self.vid_id = None
         self.do_threading = True
+        self.table_updater = None
+        self.thread_locker = None
+        self.logger = YtLogger()
+        self.current_downloads = []
 
         # YoutubeDL Options
         self.ignore_errors = True
@@ -51,26 +52,77 @@ class YtDownloader:
         self.embed_thumbnail = True
 
 
-    def request_download(self, url):
-        self.url = url
-        lock = Lock()
-        download_process = Process(target=self.download, args=(lock,)) 
-        download_process.start()
+    def start_download_thread(self, url=None):
+        if self.thread_locker is None:
+            self.thread_locker = Lock()
+
+        if url:
+            self.url = url
+        elif not self.url:
+            print('Start download process: No url was provided!')
+            return
+
+        d_thread = Thread(target=self._prep_download) 
+        d_thread.start()
 
 
-    def download(self, lock):
+
+    def _prep_download(self):
+
+
         info_dict = self.get_info()
         if not info_dict:
             print('No urls returned by get_info!')
             return 
+
+        ids_final = self._get_final_ids(info_dict)
+
+        if self.do_threading:
+            # THIS PART SHOULD USE THREADING LIMIT (Add the next thread as each is finished)
+            threads = [Thread(target=self._download, args=([v_id])) for v_id in ids_final]
+
+            for th in threads:
+
+                th.start()
+            for th in threads:
+                th.join()
+        else:
+            self._download(ids_final)
+        
+        if self.error_log:
+            self.write_errors()
+
+
+
+    def _download(self, v_ids):
+        try:
+            ydl_opts = self.get_options()
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download(v_ids)
+
+            if not self.download_archive:
+                return
+            if not self.do_threading:
+                self.write_download(v_ids)
+                return
+
+            self.thread_locker.acquire()
+            self.write_download(v_ids)
+            self.thread_locker.release()
+            
+        except Exception as e:
+            print(f'Downloader exception: {e}')
+            return False
+
+
+
+    def _get_final_ids(self, info_dict):
 
         if info_dict['extractor'] == 'youtube:tab':
             v_ids = [(entry['id'], entry['title']) for entry in info_dict['entries']]
         else:
             v_ids = [(info_dict['id'], info_dict['title'])]
 
-
-        # NEEDS REWRITTEN TO TRIGGER WHEN NOT ARCHIVING
         ids_final = []
         if self.skip_archived and self.download_archive:
             with open(self.download_archive, "r") as d_file:
@@ -83,52 +135,13 @@ class YtDownloader:
         else:
             ids_final = [v_id for v_id, title in v_ids]
         
-        # Possible one liner for statement above
+        # Possible one liner for statement above (No print statement)
         #ids_final = [v_id for v_id, title in v_ids if f'{v_id}\n' not in d_list]
 
-
-        if self.do_threading:
-            # THIS PART SHOULD USE THREADING LIMIT (Add the next process as each is finished)
-            processes = [Process(target=self.__download, args=([v_id], lock,)) for v_id in ids_final]
-
-            for p in processes:
-                #yt_process = Process(target=self.__download, args=(v_id, lock,)) 
-                #yt_process.start()
-                p.start()
-            
-            for p in processes:
-                p.join()
-        else:
-            self.__download(ids_final)
-        
-        if not self.error_log:
-            return
-
-        self.write_errors()
+        return ids_final
 
 
-    def __download(self, ids, lock=None):
-        try:
-            ydl_opts = self.get_options()
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download(ids)
-
-            if not self.download_archive:
-                return
-            if lock is None:
-                self.write_download(ids)
-                return
-
-            lock.acquire()
-            self.write_download(ids)
-            lock.release()
-            
-
-        except Exception as e:
-            print(f'Downloader exception: {e}')
-            return False
-
-
+    # Write video ids to download archive (not compatible with yt-dlp archiving)
     def write_download(self, ids):
         try:
             with open(self.download_archive, "a") as d_file:
@@ -139,6 +152,7 @@ class YtDownloader:
             print(f'Download archive exception: {e}')
 
 
+    # Write download errors to error log
     def write_errors(self):
         try:
             n_errs = len(self.logger.errors)
@@ -151,6 +165,8 @@ class YtDownloader:
             print(f'Error log exception: {e}')
 
 
+
+    # Get options for downloader
     def get_options(self):
         if self.extract_audio:
             self.postprocessors.append({
@@ -177,10 +193,13 @@ class YtDownloader:
             'writethumbnail': self.write_thumbnail,
 			'postprocessors': self.postprocessors,
 			'logger': self.logger,
-			'progress_hooks': [self.yt_hook]
+            'progress_hooks': [self.yt_hook],
+            #'postprocessor_hooks': [self.pp_hoook] # USE FOR CONVERSION/thumbnail status 
         }
 
         return ydl_opts  
+
+
 
     
     # Get video/playlist information
@@ -198,35 +217,20 @@ class YtDownloader:
                     raise Exception('No info could be gathered.')
                 return info_dict
 
-                #self.download()
             except Exception as e:
                 print(f'Info extraction error: {e}')
                 return False
     
-    # Update table with needed info
+
+
+    # Update table with download info
     def yt_hook(self, hook):
         if self.table_updater is None:
             print('Table update method not set!')
             return
 
-        info = hook['info_dict']
-        table_data = [{
-            'title':info['title'],
-            'size':hook["_total_bytes_str"],
-            'eta':'TEST ETA',
-            'speed':'TEST SPEED',
-            'elapsed':hook['_elapsed_str'],
-            'downloaded':hook['downloaded_bytes'],
-            'status':hook['status'],
-            'completion':hook['_percent_str']
-        }]
 
-        update_table = Process(target=self.table_updater, args=([table_data],))
-        update_table.start()
-        self.table_updater(table_data)
-
-        #table_process = Process(target=self.table_updater, args=([table_data]))
-        #table_process.start()
+        self.table_updater(hook)
 
         #with open('hook_data.json', 'w') as file:
         #    json.dump(hook, file)
@@ -234,15 +238,30 @@ class YtDownloader:
 
 
 
+    def table_test(self, hook):
+        pass
+
+
+    def thread_test(self):
+        from threading import Thread
+        from time import sleep
+        t_test = Thread(target=self.table_updater, args=('THREAD TEST',))
+        t_test.start()
+        sleep(1)
+        #p_test = Process(target=self.table_updater, args=('PROCESS TEST',))
+        #p_test.start()
+        #sleep(1)
+        print('done')
+
 
 # For testing without UI
 if __name__ == '__main__':
 
     ytdl = YtDownloader()
-    ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
-    ytdl.url = '9edByCiaLbY'
+    #ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
     ytdl.song_path =  './test/download'
-    ytdl.download()
+    ytdl.table_updater = ytdl.table_test
+    ytdl.start_download_thread('9edByCiaLbY')
 
     
 
