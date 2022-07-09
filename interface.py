@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         }]
 
         #print('Update table:', table_data)
-        #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1) # Why doesn't this work?
+        #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1)
 
         self.downloadTable.setRowCount(len(table_data))
         for row, row_dict in enumerate(table_data):
