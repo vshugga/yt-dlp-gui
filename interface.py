@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget
 #from multiprocessing import Process, Lock
+from threading import Thread, Lock
+from time import sleep
 import sys
 import downloader
 
@@ -8,7 +10,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi("main.ui", self)
-        
 
         test_mode = True
 
@@ -30,12 +31,20 @@ class MainWindow(QMainWindow):
         self.pathButton.clicked.connect(self.path_pressed)
 
 
+        self.table_update_interval = 0.5
+        update_table = Thread(target=self.table_updater)
+        update_table.start()
+
+
     def download_pressed(self):
-        url = self.urlInput.text()
+        input_url = self.urlInput.text()
         self.urlInput.clear()
 
         self.ytDownloader.song_path = self.pathInput.text()
-        self.ytDownloader.start_download_thread(url) # Possibly make new instance?
+        print(input_url)
+        self.ytDownloader.start_download_thread(url=input_url) # Possibly make new instance?
+
+        
 
         #self.ytDownloader.thread_test()
         
@@ -54,10 +63,37 @@ class MainWindow(QMainWindow):
             self.pathInput.setText(dir_name)
 
 
+    def table_updater(self):
+
+        interval = self.table_update_interval
+        while True:
+            self.update_table()
+            sleep(interval)
+
+
+
     # Update download table
     # Give each download a row ID?
     # Probably have to use locks to prevent race conditions
-    def update_table(self, hook, row=0):
+    def update_table(self, row=0):
+
+        hook = self.ytDownloader.hook
+        if len(hook) < 1:
+            return 
+
+        if self.downloadTable.rowCount() <= row:
+            self.downloadTable.setRowCount(row + 1)
+
+        cols = [
+            'title', 
+            'completion', 
+            'size', 
+            'speed', 
+            'downloaded', 
+            'eta', 
+            'status', 
+            'elapsed'
+        ]
 
         keys_needed = {
             'size':'_total_bytes_str',
@@ -73,22 +109,28 @@ class MainWindow(QMainWindow):
             'title':hook['info_dict']['title']
         }
 
+        if hook['hook_type'] == 'postprocess':
+            keys_needed['status'] = 'postprocessor'
+
         for key, value in keys_needed.items():
             if value in hook:
                 row_dict[key] = str(hook[value])
                 continue
-            row_dict[key] = '-'
+            if value == 'eta' or value == 'speed':
+                row_dict[key] = '-'
 
-        if self.downloadTable.rowCount() <= row:
-            self.downloadTable.setRowCount(row + 1)
 
         #print('Update table:', table_data)
         #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1)
         #self.downloadTable.setRowCount(len(table_data))
         #for row, row_dict in enumerate(table_data):
         
-        for col, key in enumerate(row_dict.keys()):
-            self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(row_dict[key]))
+        for col, col_key in enumerate(cols):
+            if col_key in row_dict:
+                self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(row_dict[col_key]))
+
+
+            
         
 
 
@@ -103,29 +145,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-'''
-        row_data = [
-            {
-            'title':'TEST TITLE',
-            'size':'TEST SIZE',
-            'completion':'TEST COMPLETION',
-            'eta':'TEST ETA',
-            'speed':'TEST SPEED'
-            },
-            {
-            'title':'TEST TITLE 2',
-            'size':'TEST SIZE 2',
-            'completion':'TEST COMPLETION 2',
-            'eta':'TEST ETA 2',
-            'speed':'TEST SPEED 2'
-            }
-        ]
-        '''
-        #print(table_data)
-        #exit()
-
-        #rowCount = self.ui.downloadTable.rowCount()
 

@@ -30,6 +30,7 @@ class YtDownloader:
         self.do_threading = True
         self.table_updater = None
         self.thread_locker = None
+        self.hook = {}
         self.logger = YtLogger()
         self.current_downloads = []
 
@@ -51,15 +52,15 @@ class YtDownloader:
         self.embed_thumbnail = True
 
 
-    def start_download_thread(self, url=None):
+    def start_download_thread(self, url):
         if self.thread_locker is None:
             self.thread_locker = Lock()
 
-        if url:
-            self.url = url
-        elif not self.url:
+        if not url:
             print('Start download process: No url was provided!')
             return
+        
+        self.url = url
 
         d_thread = Thread(target=self._prep_download) 
         d_thread.start()
@@ -79,7 +80,6 @@ class YtDownloader:
             threads = [Thread(target=self._download, args=([v_id])) for v_id in ids_final]
 
             for th in threads:
-
                 th.start()
             for th in threads:
                 th.join()
@@ -190,8 +190,8 @@ class YtDownloader:
             'writethumbnail': self.write_thumbnail,
 			'postprocessors': self.postprocessors,
 			'logger': self.logger,
-            'progress_hooks': [self.yt_hook],
-            #'postprocessor_hooks': [self.pp_hoook] # USE FOR CONVERSION/thumbnail status 
+            'progress_hooks': [self.dl_hook],
+            'postprocessor_hooks': [self.pp_hook]
         }
 
         return ydl_opts  
@@ -219,21 +219,23 @@ class YtDownloader:
                 return False
     
 
-
-    # Update table with download info
-    def yt_hook(self, hook):
+    # Update table with download info (BAD - CAUSES SEGFAULTS)
+    def dl_hook(self, hook):
         if self.table_updater is None:
             print('Table update method not set!')
             return
 
+        hook['hook_type'] = 'download'
+        self.hook = hook
 
-        self.table_updater(hook)
+    # Update table with postprocessor info (BAD - CAUSES SEGFAULTS)
+    def pp_hook(self, hook):
+        if self.table_updater is None:
+            print('Table update method not set!')
+            return
 
-        #with open('hook_data.json', 'w') as file:
-        #    json.dump(hook, file)
-        #return hook['status']
-
-
+        hook['hook_type'] = 'postprocess'
+        self.hook = hook
 
     def table_test(self, hook):
         pass
@@ -280,3 +282,25 @@ with open("./logs/downloaded.txt", "w") as down_file:
     down_file.writelines(self.down_list)
 '''
         
+
+# Update table with download info (BAD - CAUSES SEGFAULTS)
+'''
+    def dl_hook(self, hook):
+        if self.table_updater is None:
+            print('Table update method not set!')
+            return
+
+        self.thread_locker.acquire()
+        self.table_updater(hook)
+        self.thread_locker.release()
+
+    # Update table with postprocessor info (BAD - CAUSES SEGFAULTS)
+    def pp_hook(self, hook):
+        if self.table_updater is None:
+            print('Table update method not set!')
+            return
+
+        self.thread_locker.acquire()
+        self.table_updater(hook, postprocess=True)
+        self.thread_locker.release()
+'''
