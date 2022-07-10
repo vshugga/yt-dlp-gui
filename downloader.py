@@ -9,17 +9,16 @@ class YtLogger:
         self.errors = []
 
     def debug(self, msg):
-        if msg.startswith("[download]"):
-            print(msg, end="\r")
+        if msg.startswith('[download]'):
+            print(msg)
         else:
             print(msg)
-#with open('plistinfogeneric.json', 'w') as haha:
-    #    json.dump(info_dict, haha)
+
     def warning(self, msg):
         print(msg)
 
     def error(self, msg):
-        self.errors.append(msg + "\n")
+        self.errors.append(f'{msg}\n')
         print(msg)
 
 
@@ -68,8 +67,6 @@ class YtDownloader:
 
 
     def _prep_download(self):
-
-
         info_dict = self.get_info()
         if not info_dict:
             print('No urls returned by get_info!')

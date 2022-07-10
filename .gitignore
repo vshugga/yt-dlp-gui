@@ -6,5 +6,7 @@ logs/*
 test/
 
 *.sh
+*.txt
+
 interface_test.py
 qt_ui.py

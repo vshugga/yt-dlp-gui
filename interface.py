@@ -9,6 +9,14 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         uic.loadUi("main.ui", self)
         
+
+        test_mode = True
+
+        if test_mode:
+            self.urlInput.setText('OyWbQwK65Qc')
+            self.pathInput.setText('./test/download')
+
+
         self.ytDownloader = downloader.YtDownloader()
         self.ytDownloader.table_updater = self.update_table
 
@@ -48,26 +56,39 @@ class MainWindow(QMainWindow):
 
     # Update download table
     # Give each download a row ID?
-    def update_table(self, hook):
+    # Probably have to use locks to prevent race conditions
+    def update_table(self, hook, row=0):
 
-        table_data = [{
-            'title':hook['info_dict']['title'],
-            'size':hook["_total_bytes_str"],
-            'eta':hook['eta'],
-            'speed':hook['speed'],
-            'elapsed':hook['_elapsed_str'],
-            'downloaded':hook['downloaded_bytes'],
-            'status':hook['status'],
-            'completion':hook['_percent_str']
-        }]
+        keys_needed = {
+            'size':'_total_bytes_str',
+            'eta':'eta',
+            'speed':'speed',
+            'elapsed':'_elapsed_str',
+            'downloaded':'downloaded_bytes',
+            'status':'status',
+            'completion':'_percent_str'
+        }
+        
+        row_dict = {
+            'title':hook['info_dict']['title']
+        }
+
+        for key, value in keys_needed.items():
+            if value in hook:
+                row_dict[key] = str(hook[value])
+                continue
+            row_dict[key] = '-'
+
+        if self.downloadTable.rowCount() <= row:
+            self.downloadTable.setRowCount(row + 1)
 
         #print('Update table:', table_data)
         #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1)
-
-        self.downloadTable.setRowCount(len(table_data))
-        for row, row_dict in enumerate(table_data):
-            for col, key in enumerate(row_dict.keys()):
-                self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(str(row_dict[key])))
+        #self.downloadTable.setRowCount(len(table_data))
+        #for row, row_dict in enumerate(table_data):
+        
+        for col, key in enumerate(row_dict.keys()):
+            self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(row_dict[key]))
         
 
 
