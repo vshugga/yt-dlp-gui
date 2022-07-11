@@ -19,19 +19,13 @@ class MainWindow(QMainWindow):
 
 
         self.ytDownloader = downloader.YtDownloader()
-        self.ytDownloader.table_updater = self.update_table
 
-
-        #self.downloadTable.setColumnWidth(0,293)
-        #for i in range(1,5):
-        #    self.downloadTable.setColumnWidth(i,111)
-        #self.update_table()
 
         self.downloadButton.clicked.connect(self.download_pressed)
         self.pathButton.clicked.connect(self.path_pressed)
 
 
-        self.table_update_interval = 0.5
+        self.table_update_interval = 0.1
         update_table = Thread(target=self.table_updater)
         update_table.start()
 
@@ -44,9 +38,6 @@ class MainWindow(QMainWindow):
         print(input_url)
         self.ytDownloader.start_download_thread(url=input_url) # Possibly make new instance?
 
-        
-
-        #self.ytDownloader.thread_test()
         
 
     def path_pressed(self):
@@ -74,16 +65,56 @@ class MainWindow(QMainWindow):
 
     # Update download table
     # Give each download a row ID?
-    # Probably have to use locks to prevent race conditions
     def update_table(self, row=0):
 
-        hook = self.ytDownloader.hook
-        if len(hook) < 1:
-            return 
+        table_info = self.ytDownloader.table_info
+        if len(table_info) < 1:
+            return
 
         if self.downloadTable.rowCount() <= row:
             self.downloadTable.setRowCount(row + 1)
 
+
+        # Data needed from hook dict
+        keys_needed = {
+            'info_dict':'info_dict',
+            'hook_type':'hook_type',
+            'size':'_total_bytes_str',
+            'eta':'eta',
+            'speed':'speed',
+            'elapsed':'_elapsed_str',
+            'downloaded':'downloaded_bytes',
+            'status':'status',
+            'completion':'_percent_str',
+            'postprocessor':'postprocessor'
+        }
+
+
+        # If the needed keys are in hook, add to data dict
+        data = {}
+        for vid_dict in table_info.values():
+            for key, value in keys_needed.items():
+                if value in vid_dict:
+                    data[key] = vid_dict[value]
+                    continue
+                if value == 'eta' or value == 'speed':
+                    data[key] = '-'
+        
+        if 'info_dict' in data:
+            data['title'] = data['info_dict']['title']
+        if 'hook_type' in data and 'postprocessor' in data:
+            if data['hook_type'] == 'postprocess':
+                data['status'] = data['postprocessor']
+
+        
+
+
+        #print('Update table:', table_data)
+        #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1)
+        #self.downloadTable.setRowCount(len(table_data))
+        #for row, row_dict in enumerate(table_data):
+        
+        # Columns to display in order
         cols = [
             'title', 
             'completion', 
@@ -95,39 +126,9 @@ class MainWindow(QMainWindow):
             'elapsed'
         ]
 
-        keys_needed = {
-            'size':'_total_bytes_str',
-            'eta':'eta',
-            'speed':'speed',
-            'elapsed':'_elapsed_str',
-            'downloaded':'downloaded_bytes',
-            'status':'status',
-            'completion':'_percent_str'
-        }
-        
-        row_dict = {
-            'title':hook['info_dict']['title']
-        }
-
-        if hook['hook_type'] == 'postprocess':
-            keys_needed['status'] = 'postprocessor'
-
-        for key, value in keys_needed.items():
-            if value in hook:
-                row_dict[key] = str(hook[value])
-                continue
-            if value == 'eta' or value == 'speed':
-                row_dict[key] = '-'
-
-
-        #print('Update table:', table_data)
-        #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1)
-        #self.downloadTable.setRowCount(len(table_data))
-        #for row, row_dict in enumerate(table_data):
-        
         for col, col_key in enumerate(cols):
-            if col_key in row_dict:
-                self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(row_dict[col_key]))
+            if col_key in data:
+                self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(str(data[col_key])))
 
 
             

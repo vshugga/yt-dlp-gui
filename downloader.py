@@ -28,11 +28,10 @@ class YtDownloader:
         self.url = ""
         self.vid_id = None
         self.do_threading = True
-        self.table_updater = None
         self.thread_locker = None
-        self.hook = {}
+        #self.hook = {}
         self.logger = YtLogger()
-        self.current_downloads = []
+        self.table_info = {} # Keys: url ids, Values: hook dict 
 
         # YoutubeDL Options
         self.ignore_errors = True
@@ -92,6 +91,10 @@ class YtDownloader:
 
 
     def _download(self, v_ids):
+
+        for v_id in v_ids:
+            self.table_info[v_id] = {}
+
         try:
             ydl_opts = self.get_options()
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -111,6 +114,7 @@ class YtDownloader:
             print(f'Downloader exception: {e}')
             return False
 
+        # Possibly remove table info hook dict here
 
 
     def _get_final_ids(self, info_dict):
@@ -138,6 +142,7 @@ class YtDownloader:
         return ids_final
 
 
+
     # Write video ids to download archive (not compatible with yt-dlp archiving)
     def write_download(self, ids):
         try:
@@ -147,6 +152,7 @@ class YtDownloader:
                     print(f"[info] Downloads written to {self.download_archive}")
         except Exception as e:
             print(f'Download archive exception: {e}')
+
 
 
     # Write download errors to error log
@@ -219,38 +225,29 @@ class YtDownloader:
                 return False
     
 
-    # Update table with download info (BAD - CAUSES SEGFAULTS)
+    def hook_valid(self, hook):
+        if 'info_dict' not in hook:
+            print('DL Hook: No info dict in hook')
+            return False
+        if 'id' not in hook['info_dict']:
+            print('DL Hook: No ID in hook info dict')
+            return False
+        return True
+
+
+
+    # Set table info dict with download info
     def dl_hook(self, hook):
-        if self.table_updater is None:
-            print('Table update method not set!')
-            return
+        if self.hook_valid(hook):   
+            hook['hook_type'] = 'download'
+            self.table_info[hook['info_dict']['id']] = hook
 
-        hook['hook_type'] = 'download'
-        self.hook = hook
-
-    # Update table with postprocessor info (BAD - CAUSES SEGFAULTS)
+    # Set table info dict with postprocessor info
     def pp_hook(self, hook):
-        if self.table_updater is None:
-            print('Table update method not set!')
-            return
+        if self.hook_valid(hook):   
+            hook['hook_type'] = 'postprocess'
+            self.table_info[hook['info_dict']['id']] = hook
 
-        hook['hook_type'] = 'postprocess'
-        self.hook = hook
-
-    def table_test(self, hook):
-        pass
-
-
-    def thread_test(self):
-        from threading import Thread
-        from time import sleep
-        t_test = Thread(target=self.table_updater, args=('THREAD TEST',))
-        t_test.start()
-        sleep(1)
-        #p_test = Process(target=self.table_updater, args=('PROCESS TEST',))
-        #p_test.start()
-        #sleep(1)
-        print('done')
 
 
 # For testing without UI
@@ -259,7 +256,6 @@ if __name__ == '__main__':
     ytdl = YtDownloader()
     #ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
     ytdl.song_path =  './test/download'
-    ytdl.table_updater = ytdl.table_test
     ytdl.start_download_thread('9edByCiaLbY')
 
     
@@ -282,25 +278,3 @@ with open("./logs/downloaded.txt", "w") as down_file:
     down_file.writelines(self.down_list)
 '''
         
-
-# Update table with download info (BAD - CAUSES SEGFAULTS)
-'''
-    def dl_hook(self, hook):
-        if self.table_updater is None:
-            print('Table update method not set!')
-            return
-
-        self.thread_locker.acquire()
-        self.table_updater(hook)
-        self.thread_locker.release()
-
-    # Update table with postprocessor info (BAD - CAUSES SEGFAULTS)
-    def pp_hook(self, hook):
-        if self.table_updater is None:
-            print('Table update method not set!')
-            return
-
-        self.thread_locker.acquire()
-        self.table_updater(hook, postprocess=True)
-        self.thread_locker.release()
-'''
