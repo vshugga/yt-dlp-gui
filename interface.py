@@ -55,7 +55,6 @@ class MainWindow(QMainWindow):
 
 
     def table_updater(self):
-
         interval = self.table_update_interval
         while True:
             self.update_table()
@@ -68,8 +67,7 @@ class MainWindow(QMainWindow):
     def update_table(self, row=0):
 
         # Possible new implementation:
-        t_info = self.ytDownloader.table_info
-        t_data = t_info.get_table_data()
+        t_data = self.ytDownloader.table_info.get_table_data()
 
         if len(t_data) < 1:
             return
@@ -84,9 +82,8 @@ class MainWindow(QMainWindow):
                 self.downloadTable.setItem(r, c, item)
 
 
-
+        # Old implementation:
         '''
-
         table_info = self.ytDownloader.table_info
         if len(table_info) < 1:
             return

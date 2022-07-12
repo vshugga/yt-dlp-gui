@@ -75,7 +75,7 @@ class YtDownloader:
 
         if self.do_threading:
             # THIS PART SHOULD USE THREADING LIMIT (Add the next thread as each is finished)
-            threads = [Thread(target=self._download, args=([v_id])) for v_id in ids_final]
+            threads = [Thread(target=self._download, args=([[v_id]])) for v_id in ids_final]
 
             for th in threads:
                 th.start()
@@ -90,9 +90,10 @@ class YtDownloader:
 
 
     def _download(self, v_ids):
+        print(v_ids)
 
-        #for v_id in v_ids:
-            #self.table_info.hook_data[v_id] = {}
+        for v_id in v_ids:
+            self.table_info.hook_data[v_id] = {'status':'Initializing...'}
 
         try:
             ydl_opts = self.get_options()
@@ -246,7 +247,6 @@ class YtDownloader:
             v_id = hook['info_dict']['id']
 
             self.table_info.hook_data[v_id] = hook
-            print(self.table_info.hook_data.keys())
 
     # Set status with postprocessor info
     def pp_hook(self, hook):

@@ -47,9 +47,6 @@ class TableInfo:
             raise StopIteration
     '''
 
-        
-
-
 
     # Return dict of lists or list of lists having row data
     def get_table_data(self):
@@ -88,11 +85,10 @@ class TableInfo:
             return_list.append(row_list)
         '''
 
-        l = [[r_dict[c_name] for c_name in self.cols] for r_dict in table_data]
-        return l
+        return [[r_dict[c_name] for c_name in self.cols] for r_dict in table_data] # Maybe change
+        
 
 
 
-        #return [[data_str for data_str in row_dict.values()] for row_dict in table_data]
 
 
