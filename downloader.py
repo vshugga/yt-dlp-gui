@@ -1,6 +1,6 @@
 import yt_dlp
 import os
-#from multiprocessing import Process, Lock
+from table_info import TableInfo
 from threading import Thread, Lock
 import json
 
@@ -29,9 +29,8 @@ class YtDownloader:
         self.vid_id = None
         self.do_threading = True
         self.thread_locker = None
-        #self.hook = {}
+        self.table_info = TableInfo()
         self.logger = YtLogger()
-        self.table_info = {} # Keys: url ids, Values: hook dict 
 
         # YoutubeDL Options
         self.ignore_errors = True
@@ -92,8 +91,8 @@ class YtDownloader:
 
     def _download(self, v_ids):
 
-        for v_id in v_ids:
-            self.table_info[v_id] = {}
+        #for v_id in v_ids:
+            #self.table_info.hook_data[v_id] = {}
 
         try:
             ydl_opts = self.get_options()
@@ -225,7 +224,10 @@ class YtDownloader:
                 return False
     
 
-    def hook_valid(self, hook):
+    def hook_valid(self, hook, postprocess=False):
+        if postprocess:
+            if 'postprocessor' not in hook:
+                return False
         if 'info_dict' not in hook:
             print('DL Hook: No info dict in hook')
             return False
@@ -236,17 +238,23 @@ class YtDownloader:
 
 
 
-    # Set table info dict with download info
+    # Set table info with download info, set title
     def dl_hook(self, hook):
-        if self.hook_valid(hook):   
-            hook['hook_type'] = 'download'
-            self.table_info[hook['info_dict']['id']] = hook
+        if self.hook_valid(hook):
+            title = hook['info_dict']['title']
+            hook['title'] = title
+            v_id = hook['info_dict']['id']
 
-    # Set table info dict with postprocessor info
+            self.table_info.hook_data[v_id] = hook
+            print(self.table_info.hook_data.keys())
+
+    # Set status with postprocessor info
     def pp_hook(self, hook):
-        if self.hook_valid(hook):   
-            hook['hook_type'] = 'postprocess'
-            self.table_info[hook['info_dict']['id']] = hook
+        if self.hook_valid(hook, True): 
+            v_id = hook['info_dict']['id']
+            pp = hook['postprocessor']
+
+            self.table_info.hook_data[v_id]['status'] = pp
 
 
 

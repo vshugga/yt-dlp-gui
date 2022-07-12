@@ -67,6 +67,26 @@ class MainWindow(QMainWindow):
     # Give each download a row ID?
     def update_table(self, row=0):
 
+        # Possible new implementation:
+        t_info = self.ytDownloader.table_info
+        t_data = t_info.get_table_data()
+
+        if len(t_data) < 1:
+            return
+
+        self.downloadTable.setRowCount(len(t_data))
+
+        #print(t_data)
+
+        for r, row in enumerate(t_data):
+            for c, col_str in enumerate(row):
+                item = QtWidgets.QTableWidgetItem(col_str)
+                self.downloadTable.setItem(r, c, item)
+
+
+
+        '''
+
         table_info = self.ytDownloader.table_info
         if len(table_info) < 1:
             return
@@ -131,7 +151,7 @@ class MainWindow(QMainWindow):
                 self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(str(data[col_key])))
 
 
-            
+        '''
         
 
 
