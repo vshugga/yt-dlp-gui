@@ -23,13 +23,13 @@ class YtLogger:
 
 
 class YtDownloader:
-    def __init__(self):
+    def __init__(self, table_inf_obj):
         self.song_path = ""
         self.url = ""
         self.vid_id = None
         self.do_threading = True
-        self.thread_locker = None
-        self.table_info = TableInfo()
+        self.thread_locker = Lock()
+        self.table_info = table_inf_obj
         self.logger = YtLogger()
 
         # YoutubeDL Options
@@ -40,25 +40,15 @@ class YtDownloader:
         self.error_log = './logs/error_log.txt' # If not empty, record errors
         self.output_template = '/%(title)s-%(id)s.%(ext)s'
         self.add_metadata = True
-        self.write_thumbnail = True
         
         # Postprocessors
-        self.postprocessors = []
         self.extract_audio = True
         self.audio_codec = 'vorbis'
         self.audio_quality = '192'
         self.embed_thumbnail = True
 
 
-    def start_download_thread(self, url):
-        if self.thread_locker is None:
-            self.thread_locker = Lock()
-
-        if not url:
-            print('Start download process: No url was provided!')
-            return
-        
-        self.url = url
+    def start_download_thread(self):
 
         d_thread = Thread(target=self._prep_download) 
         d_thread.start()
@@ -66,7 +56,10 @@ class YtDownloader:
 
 
     def _prep_download(self):
+
+        ydl_opts = self.get_options()
         info_dict = self.get_info()
+
         if not info_dict:
             print('No urls returned by get_info!')
             return 
@@ -75,28 +68,25 @@ class YtDownloader:
 
         if self.do_threading:
             # THIS PART SHOULD USE THREADING LIMIT (Add the next thread as each is finished)
-            threads = [Thread(target=self._download, args=([[v_id]])) for v_id in ids_final]
-
+            threads = [Thread(target=self._download, args=([v_id],ydl_opts)) for v_id in ids_final]
             for th in threads:
                 th.start()
             for th in threads:
                 th.join()
         else:
-            self._download(ids_final)
+            self._download(ids_final, ydl_opts)
         
         if self.error_log:
             self.write_errors()
 
 
 
-    def _download(self, v_ids):
-        print(v_ids)
+    def _download(self, v_ids, ydl_opts):
 
         for v_id in v_ids:
             self.table_info.hook_data[v_id] = {'status':'Initializing...'}
 
         try:
-            ydl_opts = self.get_options()
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download(v_ids)
 
@@ -171,18 +161,19 @@ class YtDownloader:
 
     # Get options for downloader
     def get_options(self):
+        pps = []
         if self.extract_audio:
-            self.postprocessors.append({
+            pps.append({
     		    'key': 'FFmpegExtractAudio',
     		    'preferredcodec': self.audio_codec,
     		    'preferredquality': self.audio_quality,
     	    })
         if self.add_metadata:
-            self.postprocessors.append({
+            pps.append({
                 'key': 'FFmpegMetadata', 'add_metadata': 'True'
             })
         if self.embed_thumbnail:
-            self.postprocessors.append({
+            pps.append({
                 'key': 'EmbedThumbnail'
             })
 
@@ -190,14 +181,15 @@ class YtDownloader:
             'extract_flat': 'in_playlist',
 			'ignoreerrors': self.ignore_errors,
 			'format': self.format,
-			#'overwrites': self.overwrites,
-			#'download_archive': self.download_archive,
 			'outtmpl': self.song_path + self.output_template,
-            'writethumbnail': self.write_thumbnail,
-			'postprocessors': self.postprocessors,
+            'writethumbnail': self.embed_thumbnail,
+			'postprocessors': pps,
 			'logger': self.logger,
             'progress_hooks': [self.dl_hook],
             'postprocessor_hooks': [self.pp_hook]
+			#'overwrites': self.overwrites,
+			#'download_archive': self.download_archive,
+            #'verbose':True,
         }
 
         return ydl_opts  
@@ -245,6 +237,7 @@ class YtDownloader:
             title = hook['info_dict']['title']
             hook['title'] = title
             v_id = hook['info_dict']['id']
+            hook['status'] = hook['status'].capitalize()
 
             self.table_info.hook_data[v_id] = hook
 
@@ -252,7 +245,7 @@ class YtDownloader:
     def pp_hook(self, hook):
         if self.hook_valid(hook, True): 
             v_id = hook['info_dict']['id']
-            pp = hook['postprocessor']
+            pp = hook['postprocessor'].capitalize()
 
             self.table_info.hook_data[v_id]['status'] = pp
 
@@ -264,8 +257,13 @@ if __name__ == '__main__':
     ytdl = YtDownloader()
     #ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
     ytdl.song_path =  './test/download'
-    ytdl.start_download_thread('9edByCiaLbY')
 
+    from time import sleep
+    ytdl.url = 'qc98u-eGzlc'
+    ytdl.start_download_thread()
+    sleep(5)
+    ytdl.url = '7CH-AjajRCg'
+    ytdl.start_download_thread()
     
 
     # Call download:
@@ -275,14 +273,4 @@ if __name__ == '__main__':
     
 
 
-    
-# Scanning preexisting downloads to update downloaded.txt
-'''
-self.file_list = os.listdir(self.song_path)
-self.down_list = [
-    "youtube " + line[-15:-4] + "\n" for line in self.file_list   # REVISE/REMOVE   
-] 
-with open("./logs/downloaded.txt", "w") as down_file:
-    down_file.writelines(self.down_list)
-'''
-        
+

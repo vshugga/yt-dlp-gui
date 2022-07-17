@@ -5,38 +5,38 @@ from threading import Thread, Lock
 from time import sleep
 import sys
 import downloader
+import table_info
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi("main.ui", self)
 
-        test_mode = True
-
-        if test_mode:
-            self.urlInput.setText('OyWbQwK65Qc')
-            self.pathInput.setText('./test/download')
-
-
-        self.ytDownloader = downloader.YtDownloader()
-
+        self.table_inf_obj = table_info.TableInfo()
+        self.downloader = downloader.YtDownloader(self.table_inf_obj)
 
         self.downloadButton.clicked.connect(self.download_pressed)
         self.pathButton.clicked.connect(self.path_pressed)
 
-
+        # Possibly start/control with downloads (don't update when not downloading)
         self.table_update_interval = 0.1
         update_table = Thread(target=self.table_updater)
         update_table.start()
 
 
-    def download_pressed(self):
-        input_url = self.urlInput.text()
-        self.urlInput.clear()
+        test_mode = True
+        if test_mode:
+            self.urlInput.setText('OyWbQwK65Qc')
+            self.pathInput.setText('./test/download')
 
-        self.ytDownloader.song_path = self.pathInput.text()
-        print(input_url)
-        self.ytDownloader.start_download_thread(url=input_url) # Possibly make new instance?
+
+
+    def download_pressed(self):
+        self.downloader.url = self.urlInput.text()
+        self.downloader.song_path = self.pathInput.text()
+
+        self.downloader.start_download_thread()
+        self.urlInput.clear()
 
         
 
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
     def update_table(self, row=0):
 
         # Possible new implementation:
-        t_data = self.ytDownloader.table_info.get_table_data()
+        t_data = self.table_inf_obj.get_table_data()
 
         if len(t_data) < 1:
             return
@@ -82,73 +82,7 @@ class MainWindow(QMainWindow):
                 self.downloadTable.setItem(r, c, item)
 
 
-        # Old implementation:
-        '''
-        table_info = self.ytDownloader.table_info
-        if len(table_info) < 1:
-            return
-
-        if self.downloadTable.rowCount() <= row:
-            self.downloadTable.setRowCount(row + 1)
-
-
-        # Data needed from hook dict
-        keys_needed = {
-            'info_dict':'info_dict',
-            'hook_type':'hook_type',
-            'size':'_total_bytes_str',
-            'eta':'eta',
-            'speed':'speed',
-            'elapsed':'_elapsed_str',
-            'downloaded':'downloaded_bytes',
-            'status':'status',
-            'completion':'_percent_str',
-            'postprocessor':'postprocessor'
-        }
-
-
-        # If the needed keys are in hook, add to data dict
-        data = {}
-        for vid_dict in table_info.values():
-            for key, value in keys_needed.items():
-                if value in vid_dict:
-                    data[key] = vid_dict[value]
-                    continue
-                if value == 'eta' or value == 'speed':
-                    data[key] = '-'
         
-        if 'info_dict' in data:
-            data['title'] = data['info_dict']['title']
-        if 'hook_type' in data and 'postprocessor' in data:
-            if data['hook_type'] == 'postprocess':
-                data['status'] = data['postprocessor']
-
-        
-
-
-        #print('Update table:', table_data)
-        #self.downloadTable.setRowCount(self.downloadTable.rowCount() + 1)
-        #self.downloadTable.setRowCount(len(table_data))
-        #for row, row_dict in enumerate(table_data):
-        
-        # Columns to display in order
-        cols = [
-            'title', 
-            'completion', 
-            'size', 
-            'speed', 
-            'downloaded', 
-            'eta', 
-            'status', 
-            'elapsed'
-        ]
-
-        for col, col_key in enumerate(cols):
-            if col_key in data:
-                self.downloadTable.setItem(row, col, QtWidgets.QTableWidgetItem(str(data[col_key])))
-
-
-        '''
         
 
 
