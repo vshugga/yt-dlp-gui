@@ -1,11 +1,13 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget
-#from multiprocessing import Process, Lock
+
+# from multiprocessing import Process, Lock
 from threading import Thread, Lock
 from time import sleep
 import sys
 import downloader
 import table_info
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -23,13 +25,10 @@ class MainWindow(QMainWindow):
         update_table = Thread(target=self.table_updater)
         update_table.start()
 
-
         test_mode = True
         if test_mode:
-            self.urlInput.setText('OyWbQwK65Qc')
-            self.pathInput.setText('./test/download')
-
-
+            self.urlInput.setText("OyWbQwK65Qc")
+            self.pathInput.setText("./test/download")
 
     def download_pressed(self):
         self.downloader.url = self.urlInput.text()
@@ -37,8 +36,6 @@ class MainWindow(QMainWindow):
 
         self.downloader.start_download_thread()
         self.urlInput.clear()
-
-        
 
     def path_pressed(self):
         dialog = QFileDialog(self)
@@ -53,14 +50,11 @@ class MainWindow(QMainWindow):
         if dir_name:
             self.pathInput.setText(dir_name)
 
-
     def table_updater(self):
         interval = self.table_update_interval
         while True:
             self.update_table()
             sleep(interval)
-
-
 
     # Update download table
     # Give each download a row ID?
@@ -74,16 +68,10 @@ class MainWindow(QMainWindow):
 
         self.downloadTable.setRowCount(len(t_data))
 
-        #print(t_data)
-
         for r, row in enumerate(t_data):
             for c, col_str in enumerate(row):
                 item = QtWidgets.QTableWidgetItem(col_str)
                 self.downloadTable.setItem(r, c, item)
-
-
-        
-        
 
 
 def main():
@@ -93,8 +81,8 @@ def main():
     try:
         app.exec_()
     except:
-        print('Exiting')
+        print("Exiting")
+
 
 if __name__ == "__main__":
     main()
-
