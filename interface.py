@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget, QWidget, QLabel, QVBoxLayout
+import qt_ui
 
 # from multiprocessing import Process, Lock
 from threading import Thread, Lock
@@ -7,6 +8,20 @@ from time import sleep
 import sys
 import downloader
 import table_info
+
+'''
+class OptionsWindow(QMainWindow):
+    def __init__(self):
+        print('Init options window')
+        super(OptionsWindow, self).__init__()
+        uic.loadUi("options.ui", self)
+        
+        #layout = QVBoxLayout()
+        #self.label = QLabel("Another Window")
+        #layout.addWidget(self.label)
+        #self.setLayout(layout)
+'''  
+
 
 
 class MainWindow(QMainWindow):
@@ -17,14 +32,21 @@ class MainWindow(QMainWindow):
         self.table_inf_obj = table_info.TableInfo()
         self.downloader = downloader.YtDownloader(self.table_inf_obj)
 
-        self.downloadButton.clicked.connect(self.download_pressed)
-        self.pathButton.clicked.connect(self.path_pressed)
-
         # Possibly start/control with downloads (don't update when not downloading)
         self.table_update_interval = 0.1
         update_table = Thread(target=self.table_updater)
         update_table.start()
 
+        self.setup_ui()
+
+        
+
+
+    def setup_ui(self):
+        self.downloadButton.clicked.connect(self.download_pressed)
+        self.pathButton.clicked.connect(self.path_pressed)
+        self.optionsButton.clicked.connect(self.show_options)
+        
         test_mode = True
         if test_mode:
             self.urlInput.setText("OyWbQwK65Qc")
@@ -50,6 +72,15 @@ class MainWindow(QMainWindow):
         if dir_name:
             self.pathInput.setText(dir_name)
 
+    def show_options(self):
+        print('Show Options')
+        #window = OptionsWindow()
+        #window.show()
+        self.window = QMainWindow()
+        uic.loadUi("options.ui", self.window)
+        self.window.show()
+
+
     def table_updater(self):
         interval = self.table_update_interval
         while True:
@@ -74,7 +105,15 @@ class MainWindow(QMainWindow):
                 self.downloadTable.setItem(r, c, item)
 
 
+
+    
+
+
+
+
 def main():
+
+
     app = QApplication(sys.argv)
     form = MainWindow()
     form.show()
