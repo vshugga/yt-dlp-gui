@@ -47,6 +47,9 @@ class YtDownloader:
         self.audio_codec = "vorbis"
         self.audio_quality = "192"
         self.embed_thumbnail = True
+        self.embed_subtitle = False
+        self.convert_video = ''
+
 
     def start_download_thread(self):
         d_thread = Thread(target=self._prep_download)
@@ -164,6 +167,15 @@ class YtDownloader:
             pps.append({"key": "FFmpegMetadata", "add_metadata": "True"})
         if self.embed_thumbnail:
             pps.append({"key": "EmbedThumbnail"})
+        if self.embed_subtitle:
+            pps.append({"key": "EmbedSubtitle"})
+        if self.convert_video:
+            pps.append({"key": "FFmpegVideoConvertor",
+                        "preferedformat": self.convert_video,
+            })
+
+
+
 
         ydl_opts = {
             "extract_flat": "in_playlist",

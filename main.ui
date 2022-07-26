@@ -171,6 +171,122 @@
      <string>Options</string>
     </property>
    </widget>
+   <widget class="QComboBox" name="formatBox">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>160</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="currentText">
+     <string>Video</string>
+    </property>
+    <property name="placeholderText">
+     <string>Select Format</string>
+    </property>
+    <item>
+     <property name="text">
+      <string>Video</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   mp4</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   mkv</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   flv</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   webm</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   mov</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   avi</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   mka</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   ogg</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   aac</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Audio</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   mp3</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   aac</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   m4a</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   opus</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   vorbis</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   flac</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   alac</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   wav</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   webm</string>
+     </property>
+    </item>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
