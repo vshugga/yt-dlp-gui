@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget, QWidget, QLabel, QVBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget, QWidget, QLabel, QVBoxLayout, QComboBox
 import qt_ui
 
 # from multiprocessing import Process, Lock
@@ -9,20 +9,6 @@ import sys
 import downloader
 import table_info
 
-'''
-class OptionsWindow(QMainWindow):
-    def __init__(self):
-        print('Init options window')
-        super(OptionsWindow, self).__init__()
-        uic.loadUi("options.ui", self)
-        
-        #layout = QVBoxLayout()
-        #self.label = QLabel("Another Window")
-        #layout.addWidget(self.label)
-        #self.setLayout(layout)
-'''  
-
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -31,6 +17,7 @@ class MainWindow(QMainWindow):
 
         self.table_inf_obj = table_info.TableInfo()
         self.downloader = downloader.YtDownloader(self.table_inf_obj)
+        self.format_box_disabled = [0, 1, 10]
 
         # Possibly start/control with downloads (don't update when not downloading)
         self.table_update_interval = 0.1
@@ -46,7 +33,17 @@ class MainWindow(QMainWindow):
         self.downloadButton.clicked.connect(self.download_pressed)
         self.pathButton.clicked.connect(self.path_pressed)
         self.optionsButton.clicked.connect(self.show_options)
-        
+
+        for x in self.format_box_disabled:
+            self.formatBox.model().item(x).setEnabled(False)
+
+        #self.formatBox.setFrame(True)
+        #self.formatBox.setPlaceholderText("--Choose Format--")
+        #self.setEditable(False)
+        #self.formatBox.setCurrentIndex(-1)
+        #self.formatBox.currentText = "--Choose Format--"
+
+
         test_mode = True
         if test_mode:
             self.urlInput.setText("OyWbQwK65Qc")
@@ -55,6 +52,20 @@ class MainWindow(QMainWindow):
     def download_pressed(self):
         self.downloader.url = self.urlInput.text()
         self.downloader.song_path = self.pathInput.text()
+
+        fformat, ex_audio = self.get_format_item()  
+        if ex_audio:
+            self.downloader.convert_video = ''
+            self.downloader.audio_codec = fformat
+            self.downloader.format = 'bestaudio/best'
+            self.downloader.extract_audio = True
+        else:
+            self.downloader.convert_video = fformat
+            self.downloader.format = 'bestvideo+bestaudio'
+            self.downloader.extract_audio = False
+            # self.downloader.preferredquality = something
+
+
 
         self.downloader.start_download_thread()
         self.urlInput.clear()
@@ -72,10 +83,24 @@ class MainWindow(QMainWindow):
         if dir_name:
             self.pathInput.setText(dir_name)
 
+        
+
+
+
+    def get_format_item(self):
+        index = self.formatBox.currentIndex()
+        ex_audio = False
+        if index in self.format_box_disabled:
+            raise Exception('Format not selected')
+        if index > self.format_box_disabled[-1]:
+            ex_audio = True
+
+        text = self.formatBox.currentText()
+        return text.strip(), ex_audio
+        
+
     def show_options(self):
         print('Show Options')
-        #window = OptionsWindow()
-        #window.show()
         self.window = QMainWindow()
         uic.loadUi("options.ui", self.window)
         self.window.show()
@@ -125,3 +150,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

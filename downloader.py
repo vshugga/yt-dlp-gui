@@ -36,17 +36,17 @@ class YtDownloader:
         # YoutubeDL Options
         self.ignore_errors = True
         self.skip_archived = True  # Skip archived downloads
-        self.format = "bestaudio/best"
+        self.format = "best"
         self.download_archive = ""  #'./logs/download_archive.txt' If not empty, record downloads
         self.error_log = "./logs/error_log.txt"  # If not empty, record errors
         self.output_template = "/%(title)s-%(id)s.%(ext)s"
         self.add_metadata = True
 
         # Postprocessors
-        self.extract_audio = True
+        self.extract_audio = False
         self.audio_codec = "vorbis"
         self.audio_quality = "192"
-        self.embed_thumbnail = True
+        self.embed_thumbnail = False
         self.embed_subtitle = False
         self.convert_video = ''
 
@@ -170,7 +170,12 @@ class YtDownloader:
         if self.embed_subtitle:
             pps.append({"key": "EmbedSubtitle"})
         if self.convert_video:
+            '''
             pps.append({"key": "FFmpegVideoConvertor",
+                        "preferedformat": self.convert_video,
+            })
+            '''
+            pps.append({"key": "FFmpegVideoRemuxer",
                         "preferedformat": self.convert_video,
             })
 

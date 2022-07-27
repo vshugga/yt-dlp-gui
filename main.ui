@@ -20,6 +20,9 @@
    <iconset>
     <normaloff>ytdlp.png</normaloff>ytdlp.png</iconset>
   </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Triangular</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="downloadButton">
     <property name="geometry">
@@ -176,16 +179,30 @@
      <rect>
       <x>530</x>
       <y>160</y>
-      <width>111</width>
+      <width>141</width>
       <height>21</height>
      </rect>
     </property>
+    <property name="editable">
+     <bool>false</bool>
+    </property>
     <property name="currentText">
-     <string>Video</string>
+     <string>--Select Format--</string>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <property name="maxVisibleItems">
+     <number>5</number>
     </property>
     <property name="placeholderText">
-     <string>Select Format</string>
+     <string/>
     </property>
+    <item>
+     <property name="text">
+      <string>--Select Format--</string>
+     </property>
+    </item>
     <item>
      <property name="text">
       <string>Video</string>
@@ -233,11 +250,6 @@
     </item>
     <item>
      <property name="text">
-      <string>   aac</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
       <string>Audio</string>
      </property>
     </item>
@@ -248,17 +260,7 @@
     </item>
     <item>
      <property name="text">
-      <string>   aac</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>   m4a</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>   opus</string>
+      <string>   wav</string>
      </property>
     </item>
     <item>
@@ -273,17 +275,22 @@
     </item>
     <item>
      <property name="text">
+      <string>   m4a</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   opus</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>   aac</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
       <string>   alac</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>   wav</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>   webm</string>
      </property>
     </item>
    </widget>
