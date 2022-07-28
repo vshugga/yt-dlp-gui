@@ -82,9 +82,9 @@ class YtDownloader:
 
         if self.error_log:
             self.write_errors()
+            self.logger.errors.clear()
 
     def _download(self, v_ids, ydl_opts):
-
         for v_id in v_ids:
             self.table_info.hook_data[v_id] = {"status": "Initializing..."}
 
@@ -107,7 +107,6 @@ class YtDownloader:
             return False
 
     def _get_final_ids(self, info_dict):
-
         if info_dict["extractor"] == "youtube:tab":
             v_ids = [(entry["id"], entry["title"]) for entry in info_dict["entries"]]
         else:
@@ -163,22 +162,28 @@ class YtDownloader:
                     "preferredquality": self.audio_quality,
                 }
             )
+
+        '''
+        convertfs = ['flv', 'mov', 'avi', 'ogg']
+        if self.convert_video in convertfs:
+            pps.append({"key": "FFmpegVideoConverter",
+                        "preferedformat": self.convert_video,
+            }) 
+        '''
+        if self.convert_video:
+            pps.append({"key": "FFmpegVideoRemuxer",
+                        "preferedformat": self.convert_video,
+            })
+        
         if self.add_metadata:
             pps.append({"key": "FFmpegMetadata", "add_metadata": "True"})
         if self.embed_thumbnail:
             pps.append({"key": "EmbedThumbnail"})
         if self.embed_subtitle:
             pps.append({"key": "EmbedSubtitle"})
-        if self.convert_video:
-            '''
-            pps.append({"key": "FFmpegVideoConvertor",
-                        "preferedformat": self.convert_video,
-            })
-            '''
-            pps.append({"key": "FFmpegVideoRemuxer",
-                        "preferedformat": self.convert_video,
-            })
 
+            
+        
 
 
 

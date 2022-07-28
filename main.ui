@@ -177,7 +177,7 @@
    <widget class="QComboBox" name="formatBox">
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>520</x>
       <y>160</y>
       <width>141</width>
       <height>21</height>
