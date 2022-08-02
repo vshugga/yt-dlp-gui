@@ -6,24 +6,143 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>380</width>
     <height>300</height>
    </rect>
+  </property>
+  <property name="focusPolicy">
+   <enum>Qt::StrongFocus</enum>
   </property>
   <property name="windowTitle">
    <string>YT-DLP Options</string>
   </property>
-  <widget class="QCheckBox" name="checkBox">
+  <widget class="QCheckBox" name="thumbnailBox">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>20</y>
+     <y>160</y>
      <width>141</width>
      <height>23</height>
     </rect>
    </property>
    <property name="text">
     <string>Embed Thumbnail</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="metadataBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>190</y>
+     <width>141</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Embed Metadata</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="subtitleBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>130</y>
+     <width>141</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Embed Subtitles</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="archivePath">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>30</y>
+     <width>171</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string/>
+   </property>
+   <property name="text">
+    <string notr="true"/>
+   </property>
+   <property name="placeholderText">
+    <string>Download Archive Path</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="archiveButton">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>30</y>
+     <width>51</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>...</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="errorPath">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>60</y>
+     <width>171</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string/>
+   </property>
+   <property name="text">
+    <string notr="true"/>
+   </property>
+   <property name="placeholderText">
+    <string>Error Log Path</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="errorButton">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>60</y>
+     <width>51</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>...</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="closeButton">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>260</y>
+     <width>83</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="skiparchiveBox">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>100</y>
+     <width>191</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Skip Archived Downloads</string>
    </property>
   </widget>
  </widget>

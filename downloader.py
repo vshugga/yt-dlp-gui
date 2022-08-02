@@ -35,12 +35,12 @@ class YtDownloader:
 
         # YoutubeDL Options
         self.ignore_errors = True
-        self.skip_archived = True  # Skip archived downloads
+        self.skip_archived = False  # Skip archived downloads
         self.format = "best"
         self.download_archive = ""  #'./logs/download_archive.txt' If not empty, record downloads
-        self.error_log = "./logs/error_log.txt"  # If not empty, record errors
+        self.error_log = ""  # If not empty, record errors
         self.output_template = "/%(title)s-%(id)s.%(ext)s"
-        self.add_metadata = True
+        self.add_metadata = False
 
         # Postprocessors
         self.extract_audio = False
@@ -56,6 +56,7 @@ class YtDownloader:
         d_thread.start()
 
     def _prep_download(self):
+
         ydl_opts = (
             self.get_options()
         )  # Do this first to prevent new thread from overwriting
@@ -88,23 +89,22 @@ class YtDownloader:
         for v_id in v_ids:
             self.table_info.hook_data[v_id] = {"status": "Initializing..."}
 
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download(v_ids)
-
-            if not self.download_archive:
-                return
-            if not self.do_threading:
-                self.write_download(v_ids)
-                return
-
-            self.thread_locker.acquire()
+        #try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download(v_ids)
+        if not self.download_archive:
+            return
+        if not self.do_threading:
             self.write_download(v_ids)
-            self.thread_locker.release()
+            return
+        self.thread_locker.acquire()
+        self.write_download(v_ids)
+        self.thread_locker.release()
 
-        except Exception as e:
-            print(f"Downloader exception: {e}")
-            return False
+        #except Exception as e:
+            #raise Exception(e)
+            #print(f"Downloader exception: {e}")
+            #return False
 
     def _get_final_ids(self, info_dict):
         if info_dict["extractor"] == "youtube:tab":
@@ -131,25 +131,27 @@ class YtDownloader:
 
     # Write video ids to download archive (not compatible with yt-dlp archiving)
     def write_download(self, ids):
-        try:
-            with open(self.download_archive, "a") as d_file:
-                for v_id in ids:
-                    d_file.writelines(f"{v_id}\n")
-                    print(f"[info] Downloads written to {self.download_archive}")
-        except Exception as e:
-            print(f"Download archive exception: {e}")
+        #try:
+        with open(self.download_archive, "a") as d_file:
+            for v_id in ids:
+                d_file.writelines(f"{v_id}\n")
+                print(f"[info] Downloads written to {self.download_archive}")
+        #except Exception as e:
+            #raise Exception(e)
+            #print(f"Download archive exception: {e}")
 
     # Write download errors to error log
     def write_errors(self):
-        try:
-            n_errs = len(self.logger.errors)
-            if n_errs < 1:
-                return
-            with open(self.error_log, "a") as err_file:
-                err_file.writelines(self.logger.errors)
-                print(f"[info] {n_errs} errors written to {self.error_log}")
-        except Exception as e:
-            print(f"Error log exception: {e}")
+        #try:
+        n_errs = len(self.logger.errors)
+        if n_errs < 1:
+            return
+        with open(self.error_log, "a") as err_file:
+            err_file.writelines(self.logger.errors)
+            print(f"[info] {n_errs} errors written to {self.error_log}")
+        #except Exception as e:
+        #    raise Exception(e)
+            #print(f"Error log exception: {e}")
 
     # Get options for downloader
     def get_options(self):
@@ -179,13 +181,8 @@ class YtDownloader:
             pps.append({"key": "FFmpegMetadata", "add_metadata": "True"})
         if self.embed_thumbnail:
             pps.append({"key": "EmbedThumbnail"})
-        if self.embed_subtitle:
-            pps.append({"key": "EmbedSubtitle"})
-
-            
-        
-
-
+        #if self.embed_subtitle:
+        #    pps.append({"key": "EmbedSubtitle"})
 
         ydl_opts = {
             "extract_flat": "in_playlist",
@@ -213,15 +210,17 @@ class YtDownloader:
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            try:
-                info_dict = ydl.extract_info(self.url, download=False)
-                if not info_dict:
-                    raise Exception("No info could be gathered.")
-                return info_dict
+            #try:
+            info_dict = ydl.extract_info(self.url, download=False)
+            if not info_dict:
+                raise Exception("No info could be gathered.")
+            return info_dict
 
-            except Exception as e:
-                print(f"Info extraction error: {e}")
-                return False
+            
+            #except Exception as e:
+            #    raise Exception(e)
+                #print(f"Info extraction error: {e}")
+                #return False
 
     def hook_valid(self, hook, postprocess=False):
         if postprocess and "postprocessor" not in hook:
