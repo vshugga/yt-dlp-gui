@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>380</width>
-    <height>300</height>
+    <width>514</width>
+    <height>262</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -122,8 +122,8 @@
   <widget class="QPushButton" name="closeButton">
    <property name="geometry">
     <rect>
-     <x>280</x>
-     <y>260</y>
+     <x>420</x>
+     <y>230</y>
      <width>83</width>
      <height>25</height>
     </rect>
@@ -143,6 +143,132 @@
    </property>
    <property name="text">
     <string>Skip Archived Downloads</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="bitrateText">
+   <property name="geometry">
+    <rect>
+     <x>420</x>
+     <y>40</y>
+     <width>61</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string/>
+   </property>
+   <property name="text">
+    <string notr="true"/>
+   </property>
+   <property name="placeholderText">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="bitrateLabel">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>40</y>
+     <width>151</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Audio bitrate (kbit/s):</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="qualityLabel">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>70</y>
+     <width>101</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Quality:</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="bestRB">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>90</y>
+     <width>105</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Best</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="worstRB">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>110</y>
+     <width>105</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Worst</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="bestVidRB">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>130</y>
+     <width>151</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Best   (Video Only)</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="worstVidRB">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>150</y>
+     <width>151</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Worst (Video Only)</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="worstAudioRB">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>190</y>
+     <width>151</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Worst (Audio Only)</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="bestAudioRB">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>170</y>
+     <width>151</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Best   (Audio Only)</string>
    </property>
   </widget>
  </widget>

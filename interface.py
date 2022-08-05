@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget, QWidget, QLabel, QVBoxLayout, QComboBox, QMessageBox, QCheckBox
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget, QWidget, QLabel, QVBoxLayout, QComboBox, QMessageBox, QCheckBox, QButtonGroup
 import qt_ui
 
 # from multiprocessing import Process, Lock
@@ -38,6 +38,17 @@ class MainWindow(QMainWindow):
         self.optWindow.closeButton.clicked.connect(self.save_close_options)
         self.optWindow.archiveButton.clicked.connect(self.archive_path_pressed)
         self.optWindow.errorButton.clicked.connect(self.error_path_pressed)
+
+        '''
+        self.optWindow.radio_buttons = {
+            self.optWindow.bestRB:'best',
+            self.optWindow.worstRB:'worst',
+            self.optWindow.bestVidRB:'bestvideo',
+            self.optWindow.worstVidRB:'worstvideo',
+            self.optWindow.bestAudioRB:'bestaudio',
+            self.optWindow.worstAudioRB:'worstaudio'
+        }
+        '''
 
         for x in self.format_box_disabled:
             self.formatBox.model().item(x).setEnabled(False)
@@ -134,37 +145,47 @@ class MainWindow(QMainWindow):
 
     def show_options(self):
         print('Show Options')
-        skip_archive = self.downloader.skip_archived
-        archive_path = self.downloader.download_archive
-        error_path = self.downloader.error_log
-        embed_subs = self.downloader.embed_subtitle 
-        embed_thumb = self.downloader.embed_thumbnail
-        embed_meta = self.downloader.add_metadata
+        #skip_archive = self.downloader.skip_archived
+        #archive_path = self.downloader.download_archive
+        #error_path = self.downloader.error_log
+        #embed_subs = self.downloader.embed_subtitle 
+        #embed_thumb = self.downloader.embed_thumbnail
+        #embed_meta = self.downloader.add_metadata
         
-        self.optWindow.archivePath.setText(archive_path)
-        self.optWindow.errorPath.setText(error_path)
-        self.optWindow.skiparchiveBox.setChecked(skip_archive)
-        self.optWindow.subtitleBox.setChecked(embed_subs)
-        self.optWindow.thumbnailBox.setChecked(embed_thumb)
-        self.optWindow.metadataBox.setChecked(embed_meta)
+        #self.optWindow.archivePath.setText(archive_path)
+        #self.optWindow.errorPath.setText(error_path)
+        #self.optWindow.skiparchiveBox.setChecked(skip_archive)
+        #self.optWindow.subtitleBox.setChecked(embed_subs)
+        #self.optWindow.thumbnailBox.setChecked(embed_thumb)
+        #self.optWindow.metadataBox.setChecked(embed_meta)
 
         self.optWindow.show()
         
     def save_close_options(self):
         archive_path = self.optWindow.archivePath.text()
         error_path = self.optWindow.errorPath.text()
+        bitrate = self.optWindow.bitrateText.text()
+
         skip_archive = self.optWindow.skiparchiveBox.isChecked()
         embed_subs = self.optWindow.subtitleBox.isChecked()
         embed_thumb = self.optWindow.thumbnailBox.isChecked()
         embed_meta = self.optWindow.metadataBox.isChecked()
         
+        '''
+        for rb in self.optWindow.radio_buttons.keys():
+            if rb.isChecked():
+                self.downloader.format = self.optWindow.radio_buttons[rb]
+                print(f'Format selected: {self.downloader.format}')
+        '''
+
         self.downloader.download_archive = archive_path
         self.downloader.error_log = error_path
+        self.downloader.audio_quality = bitrate
+
         self.downloader.skip_archived = skip_archive
         self.downloader.embed_subtitle = embed_subs
         self.downloader.embed_thumbnail = embed_thumb
         self.downloader.add_metadata = embed_meta
-
 
         self.optWindow.close()
 
