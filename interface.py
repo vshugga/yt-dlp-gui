@@ -5,9 +5,10 @@ import qt_ui
 # from multiprocessing import Process, Lock
 from threading import Thread, Lock
 from time import sleep
+from thread_manager import UpdateUIThread, DownloaderThread
 import sys
 import downloader
-import table_info
+import downloader_info
 
 
 class MainWindow(QMainWindow):
@@ -15,14 +16,19 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         uic.loadUi("main.ui", self)
 
-        self.table_inf_obj = table_info.TableInfo()
-        self.downloader = downloader.YtDownloader(self.table_inf_obj)
+        
+        self.dl_info = downloader_info.DownloaderInfo()
+        self.downloader = downloader.YtDownloader(self.dl_info)
+        #self.downloader_thread = DownloaderThread(self)
         self.format_box_disabled = [0, 1, 10]
 
         # Possibly start/control with downloads (don't update when not downloading)
-        self.table_update_interval = 0.1
-        update_table = Thread(target=self.table_updater)
-        update_table.start()
+        self.refresh_interval = 0.1
+        #data_refresher = Thread(target=self.get_data_task)
+        #data_refresher.start()
+
+        self.data_refresh_thread = UpdateUIThread(self)
+        self.data_refresh_thread.start()
 
         self.setup_ui()
 
@@ -30,7 +36,6 @@ class MainWindow(QMainWindow):
     def setup_ui(self):
         self.downloadButton.clicked.connect(self.download_pressed)
         self.pathButton.clicked.connect(self.path_pressed)
-        self.optionsButton.clicked.connect(self.show_options)
 
 
         self.optWindow = QMainWindow()
@@ -38,6 +43,7 @@ class MainWindow(QMainWindow):
         self.optWindow.closeButton.clicked.connect(self.save_close_options)
         self.optWindow.archiveButton.clicked.connect(self.archive_path_pressed)
         self.optWindow.errorButton.clicked.connect(self.error_path_pressed)
+        self.optionsButton.clicked.connect(self.optWindow.show)
 
         '''
         self.optWindow.radio_buttons = {
@@ -83,14 +89,11 @@ class MainWindow(QMainWindow):
                 # self.downloader.preferredquality = something
 
             self.downloader.start_download_thread()
+            #self.downloader_thread.start()
             self.urlInput.clear()
 
         except Exception as e:
-            msg_box = QMessageBox()
-            msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setWindowTitle("Error")
-            msg_box.setText(f"{e}")
-            msg_box.exec()
+            self.display_error(e)
         
 
     def path_pressed(self):
@@ -130,7 +133,6 @@ class MainWindow(QMainWindow):
         #fname = dialog.getOpenFileName(self, "Select Error Log File")
 
 
-
     def get_format_item(self):
         index = self.formatBox.currentIndex()
         ex_audio = False
@@ -142,7 +144,7 @@ class MainWindow(QMainWindow):
         text = self.formatBox.currentText()
         return text.strip(), ex_audio
         
-
+    '''
     def show_options(self):
         print('Show Options')
         #skip_archive = self.downloader.skip_archived
@@ -160,7 +162,8 @@ class MainWindow(QMainWindow):
         #self.optWindow.metadataBox.setChecked(embed_meta)
 
         self.optWindow.show()
-        
+    '''
+
     def save_close_options(self):
         archive_path = self.optWindow.archivePath.text()
         error_path = self.optWindow.errorPath.text()
@@ -190,20 +193,38 @@ class MainWindow(QMainWindow):
         self.optWindow.close()
 
 
-    def table_updater(self):
-        interval = self.table_update_interval
+    def display_error(self, exception):
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setWindowTitle("Error")
+        msg_box.setText(f"{exception}")
+        msg_box.exec()
+
+    '''
+    # Updates the table and checks for downloader errors every interval
+    def get_data_task(self):
         while True:
             self.update_table()
-            sleep(interval)
+            self.get_errors()
+            sleep(self.get_data_interval)
+    '''
+
+    # Display errors if there are any
+    def get_errors(self):
+        cur_error = self.dl_info.cur_dl_error
+        if cur_error:
+            #
+            print('Error seen')
+            self.downloader.thread_locker.acquire()
+            self.display_error(cur_error)
+            self.downloader.thread_locker.release()
+            self.dl_info.cur_dl_error = None
+
 
     # Update download table
     # Give each download a row ID?
     def update_table(self, row=0):
-
-        # Possible new implementation:
-        t_data = self.table_inf_obj.get_table_data()
-
-
+        t_data = self.dl_info.get_table_data()
         if len(t_data) < 1:
             return
 
@@ -218,12 +239,7 @@ class MainWindow(QMainWindow):
 
     
 
-
-
-
 def main():
-
-
     app = QApplication(sys.argv)
     form = MainWindow()
     form.show()

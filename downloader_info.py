@@ -1,5 +1,5 @@
-# Holds info for QTableWidget
-class TableInfo:
+# Holds info for QTableWidget and downloader errors
+class DownloaderInfo:
     def __init__(self):
 
         # Columns of table in order
@@ -30,6 +30,7 @@ class TableInfo:
         # Dict of download data: retains insertion order since python 3.7 (I think)
         # Keys = Vid IDs, Value = video data
         self.hook_data = {}
+        self.cur_dl_error = None
 
     # Return dict of lists or list of lists having row data
     def get_table_data(self):
@@ -44,25 +45,7 @@ class TableInfo:
                     continue
                 r_data[name] = str(vid_data[key])
 
-            """
-            if 'info_dict' in r_data:
-                if 'title' in r_data['info_dict']:
-                    r_data['title'] = r_data['info_dict']['title']
-
-            if r_data['postprocessor'] != '-':
-                r_data['status'] = r_data['postprocessor']
-            """
-
             table_data.append(r_data)
-
-        """
-        return_list = []
-        for r_dict in table_data:
-            row_list = []
-            for c_name in self.cols:
-                row_list.append(r_dict[c_name])
-            return_list.append(row_list)
-        """
 
         data_final = [
             [r_dict[c_name] for c_name in self.cols] for r_dict in table_data]  # Maybe change for readability
