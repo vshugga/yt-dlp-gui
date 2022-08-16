@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTableWidget, QWidget, QLabel, QVBoxLayout, QComboBox, QMessageBox, QCheckBox, QButtonGroup
+from PyQt5.QtCore import pyqtSignal
 import qt_ui
 
 # from multiprocessing import Process, Lock
@@ -12,13 +13,17 @@ import downloader_info
 
 
 class MainWindow(QMainWindow):
+    err_signal = pyqtSignal(str)
+    table_signal = pyqtSignal(dict)
+
+
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi("main.ui", self)
 
         
         self.dl_info = downloader_info.DownloaderInfo()
-        self.downloader = downloader.YtDownloader(self.dl_info)
+        self.downloader = downloader.YtDownloader(self.dl_info, self.err_signal, self.table_signal)
         #self.downloader_thread = DownloaderThread(self)
         self.format_box_disabled = [0, 1, 10]
 
@@ -27,8 +32,11 @@ class MainWindow(QMainWindow):
         #data_refresher = Thread(target=self.get_data_task)
         #data_refresher.start()
 
-        self.data_refresh_thread = UpdateUIThread(self)
-        self.data_refresh_thread.start()
+        self.err_signal.connect(self.display_error)
+        self.table_signal.connect(self.update_table)
+
+        #self.data_refresh_thread = UpdateUIThread(self)
+        #self.data_refresh_thread.start()
 
         self.setup_ui()
 
@@ -144,25 +152,6 @@ class MainWindow(QMainWindow):
         text = self.formatBox.currentText()
         return text.strip(), ex_audio
         
-    '''
-    def show_options(self):
-        print('Show Options')
-        #skip_archive = self.downloader.skip_archived
-        #archive_path = self.downloader.download_archive
-        #error_path = self.downloader.error_log
-        #embed_subs = self.downloader.embed_subtitle 
-        #embed_thumb = self.downloader.embed_thumbnail
-        #embed_meta = self.downloader.add_metadata
-        
-        #self.optWindow.archivePath.setText(archive_path)
-        #self.optWindow.errorPath.setText(error_path)
-        #self.optWindow.skiparchiveBox.setChecked(skip_archive)
-        #self.optWindow.subtitleBox.setChecked(embed_subs)
-        #self.optWindow.thumbnailBox.setChecked(embed_thumb)
-        #self.optWindow.metadataBox.setChecked(embed_meta)
-
-        self.optWindow.show()
-    '''
 
     def save_close_options(self):
         archive_path = self.optWindow.archivePath.text()
@@ -193,6 +182,7 @@ class MainWindow(QMainWindow):
         self.optWindow.close()
 
 
+    #@QtCore.pyqtSlot(str)
     def display_error(self, exception):
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Warning)
@@ -209,7 +199,7 @@ class MainWindow(QMainWindow):
             sleep(self.get_data_interval)
     '''
 
-    # Display errors if there are any
+    '''
     def get_errors(self):
         cur_error = self.dl_info.cur_dl_error
         if cur_error:
@@ -219,12 +209,12 @@ class MainWindow(QMainWindow):
             self.display_error(cur_error)
             self.downloader.thread_locker.release()
             self.dl_info.cur_dl_error = None
-
+    '''
 
     # Update download table
     # Give each download a row ID?
-    def update_table(self, row=0):
-        t_data = self.dl_info.get_table_data()
+    def update_table(self, hook_dict):
+        t_data = self.dl_info.get_table_data(hook_dict)
         if len(t_data) < 1:
             return
 

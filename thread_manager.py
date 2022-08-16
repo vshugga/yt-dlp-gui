@@ -3,7 +3,6 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from time import sleep
 
 class UpdateUIThread(QThread):
-    error_signal = pyqtSignal()
 
     def __init__(self, main_window):
         QThread.__init__(self)
@@ -26,8 +25,8 @@ class UpdateUIThread(QThread):
         while True:
             err = self.main_window.dl_info.cur_dl_error
             if err:
-                error_signal.emit(err)
-                self.main_window.dl_info.cur_dl_error
+                #self.main_window.err_signal.emit(err)
+                self.main_window.dl_info.cur_dl_error = None
             sleep(self.main_window.refresh_interval)
 
 class DownloaderThread(QThread):

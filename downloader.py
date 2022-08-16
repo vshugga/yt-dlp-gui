@@ -6,9 +6,10 @@ import json
 
 
 class YtLogger:
-    def __init__(self, dl_inf_obj):
+    def __init__(self, dl_inf_obj, err_sig):
         self.errors = []
         self.dl_info = dl_inf_obj
+        self.err_signal = err_sig
 
     def debug(self, msg):
         if msg.startswith("[download]"):
@@ -21,19 +22,22 @@ class YtLogger:
 
     def error(self, msg):
         self.errors.append(f"{msg}\n")
-        self.dl_info.cur_dl_error = msg
+        #self.dl_info.cur_dl_error = msg
+        self.err_signal.emit(msg)
         print(msg)
 
 
 class YtDownloader:
-    def __init__(self, dl_inf_obj):
+    def __init__(self, dl_inf_obj, err_sig, table_sig):
         self.song_path = ""
         self.url = ""
         self.vid_id = None
         self.do_threading = True
         self.thread_locker = Lock()
         self.dl_info = dl_inf_obj
-        self.logger = YtLogger(dl_inf_obj)
+        self.logger = YtLogger(dl_inf_obj, err_sig)
+        self.table_signal = table_sig
+        self.table_data = {}
 
         # YoutubeDL Options
         self.ignore_errors = True
@@ -58,7 +62,6 @@ class YtDownloader:
         d_thread.start()
 
     def _prep_download(self):
-
         ydl_opts = (
             self.get_options()
         )  # Do this first to prevent new thread from overwriting
@@ -89,7 +92,9 @@ class YtDownloader:
 
     def _download(self, v_ids, ydl_opts):
         for v_id in v_ids:
-            self.dl_info.hook_data[v_id] = {"status": "Initializing..."}
+            #self.dl_info.hook_data[v_id] = {"status": "Initializing..."}
+            self.table_data[v_id] = {"status": "Initializing..."}
+            self.table_signal.emit(self.table_data)  # When download finished, set finished?
 
         #try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -244,7 +249,9 @@ class YtDownloader:
             v_id = hook["info_dict"]["id"]
             hook["status"] = hook["status"].capitalize()
 
-            self.dl_info.hook_data[v_id] = hook
+            #self.dl_info.hook_data[v_id] = hook
+            self.table_data[v_id] = hook
+            self.table_signal.emit(self.table_data)
 
     # Set status with postprocessor info
     def pp_hook(self, hook):
@@ -252,7 +259,9 @@ class YtDownloader:
             v_id = hook["info_dict"]["id"]
             pp = hook["postprocessor"].capitalize()
 
-            self.dl_info.hook_data[v_id]["status"] = pp
+            #self.dl_info.hook_data[v_id]["status"] = pp
+            self.table_data[v_id] = hook
+            self.table_signal.emit(self.table_data)
 
 
 # For testing without UI

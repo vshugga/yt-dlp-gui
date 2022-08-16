@@ -32,11 +32,15 @@ class DownloaderInfo:
         self.hook_data = {}
         self.cur_dl_error = None
 
-    # Return dict of lists or list of lists having row data
-    def get_table_data(self):
+    # Return list of lists having row data from the current hook_data
+    def get_table_data(self, hook_dict=None):
+        if hook_dict:
+            data = hook_dict
+        else:
+            data = self.hook_data
         table_data = []
 
-        for vid_data in self.hook_data.values():
+        for vid_data in data.values():
             r_data = {}  # Row data collected from hook dict; may not be complete
 
             for name, key in self.hook_keys.items():
