@@ -82,6 +82,7 @@ class MainWindow(QMainWindow):
     def download_pressed(self):
         self.downloader.url = self.urlInput.text()
         self.downloader.song_path = self.pathInput.text()
+        self.downloader.is_playlist = self.plistBox.isChecked()
 
         try:
             fformat, ex_audio = self.get_format_item()  
@@ -182,7 +183,6 @@ class MainWindow(QMainWindow):
         self.optWindow.close()
 
 
-    #@QtCore.pyqtSlot(str)
     def display_error(self, exception):
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Warning)

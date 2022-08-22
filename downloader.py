@@ -1,8 +1,10 @@
 import yt_dlp
 import os
-#import downloader_info
+import downloader_info
 from threading import Thread, Lock
 import json
+
+from PyQt5.QtCore import pyqtSignal
 
 
 class YtLogger:
@@ -38,6 +40,7 @@ class YtDownloader:
         self.logger = YtLogger(dl_inf_obj, err_sig)
         self.table_signal = table_sig
         self.table_data = {}
+        self.is_playlist = False
 
         # YoutubeDL Options
         self.ignore_errors = True
@@ -62,29 +65,46 @@ class YtDownloader:
         d_thread.start()
 
     def _prep_download(self):
-        ydl_opts = (
-            self.get_options()
-        )  # Do this first to prevent new thread from overwriting
-        info_dict = self.get_info()
+        ydl_opts = self.get_options()  # Do this first to prevent new thread from overwriting
+        v_ids = [self.url]
+        info_dict = None
 
-        if not info_dict:
-            print("No urls returned by get_info!")
-            return
+        if self.is_playlist:
+            info_dict = self.get_info()
+            v_ids = [entry["id"] for entry in info_dict["entries"]]
 
-        ids_final = self._get_final_ids(info_dict)
+        if self.skip_archived and self.download_archive:
+            if not info_dict:
+                info_dict = self.get_info()
+            v_ids = self.get_nonarchived(info_dict)
+        
+        '''
+        info_dict = {}
+        if self.is_playlist: 
+            info_dict = self.get_info()
+            if not info_dict:
+                raise Exception("No urls returned by get_info!")
+                return
+            ids_final = self._get_final_ids(info_dict)
+        else:
+            ids_final = self._get_final_ids(info_dict, single_id=)
+        '''
+
+        print(v_ids)
+        print(ydl_opts)
 
         if self.do_threading:
             # TODO: THREADING LIMIT (Add the next thread as each is finished)
             threads = [
                 Thread(target=self._download, args=([v_id], ydl_opts))
-                for v_id in ids_final
+                for v_id in v_ids
             ]
             for th in threads:
                 th.start()
             for th in threads:
                 th.join()
         else:
-            self._download(ids_final, ydl_opts)
+            self._download(v_ids, ydl_opts)
 
         if self.error_log:
             self.write_errors()
@@ -113,23 +133,26 @@ class YtDownloader:
             #print(f"Downloader exception: {e}")
             #return False
 
-    def _get_final_ids(self, info_dict):
-        if info_dict["extractor"] == "youtube:tab":
-            v_ids = [(entry["id"], entry["title"]) for entry in info_dict["entries"]]
+    def get_nonarchived(self, info_dict, single_id=None):
+        '''
+        if single_id:
+            v_ids = [single_id]
+        #elif 'extractor' in info_dict:
+            #if info_dict["extractor"] == "youtube:tab":
         else:
-            v_ids = [(info_dict["id"], info_dict["title"])]
-
+            v_ids = [entry["id"] for entry in info_dict["entries"]]
+        '''
+        v_ids = [entry["id"] for entry in info_dict["entries"]]
+            
         ids_final = []
-        if self.skip_archived and self.download_archive:
-            with open(self.download_archive, "r") as d_file:
-                d_list = d_file.readlines()
-            for v_id, title in v_ids:
-                if f"{v_id}\n" in d_list:
-                    print(f"[info] ID: {v_id} already recorded in the archive; {title}")
-                    continue
-                ids_final.append(v_id)
-        else:
-            ids_final = [v_id for v_id, title in v_ids]
+        with open(self.download_archive, "r") as d_file:
+            d_list = d_file.readlines()
+        for v_id in v_ids:
+            if f"{v_id}\n" in d_list:
+                print(f"[info] ID: {v_id} already recorded in the archive")
+                continue
+            ids_final.append(v_id)
+        return ids_final
 
         # Possible one liner for statement above (No print)
         # ids_final = [v_id for v_id, title in v_ids if f'{v_id}\n' not in d_list]
@@ -192,7 +215,7 @@ class YtDownloader:
         #    pps.append({"key": "EmbedSubtitle"})
 
         ydl_opts = {
-            "extract_flat": "in_playlist",
+            #"extract_flat": "in_playlist",
             "ignoreerrors": self.ignore_errors,
             "format": self.format,
             "outtmpl": self.song_path + self.output_template,
@@ -212,7 +235,8 @@ class YtDownloader:
     def get_info(self):
 
         ydl_opts = {
-            "extract_flat": "in_playlist",
+            #"extract_flat": "in_playlist",
+            "extract_flat": True,
             "logger": self.logger,
         }
 
@@ -264,16 +288,20 @@ class YtDownloader:
             self.table_signal.emit(self.table_data)
 
 
+
+
 # For testing without UI
 if __name__ == "__main__":
 
-    ytdl = YtDownloader()
-    # ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
+    dl_inf = downloader_info.DownloaderInfo()
+
+    ytdl = YtDownloader(dl_inf, err_testsig, table_testsig)
     ytdl.song_path = "./test/download"
 
     from time import sleep
 
-    ytdl.url = "qc98u-eGzlc"
+    #ytdl.url = "qc98u-eGzlc"
+    ytdl.url = 'OLAK5uy_m4dSzHl2bwTO6fc5-4VyRk2s5Ycp_FzFg'
     ytdl.start_download_thread()
     sleep(5)
     ytdl.url = "7CH-AjajRCg"

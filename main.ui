@@ -294,6 +294,22 @@
      </property>
     </item>
    </widget>
+   <widget class="QCheckBox" name="plistBox">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>160</y>
+      <width>89</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Check if downloading playlist</string>
+    </property>
+    <property name="text">
+     <string>Playlist</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
