@@ -23,10 +23,7 @@ class UpdateUIThread(QThread):
     def run(self):
         #self.get_data_task()
         while True:
-            err = self.main_window.dl_info.cur_dl_error
-            if err:
-                #self.main_window.err_signal.emit(err)
-                self.main_window.dl_info.cur_dl_error = None
+            self.main_window.update_table()
             sleep(self.main_window.refresh_interval)
 
 class DownloaderThread(QThread):

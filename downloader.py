@@ -71,7 +71,8 @@ class YtDownloader:
 
         if self.is_playlist:
             info_dict = self.get_info()
-            v_ids = [entry["id"] for entry in info_dict["entries"]]
+            if "entries" in info_dict:
+                v_ids = [entry["id"] for entry in info_dict["entries"]]
 
         if self.skip_archived and self.download_archive:
             if not info_dict:
@@ -90,8 +91,8 @@ class YtDownloader:
             ids_final = self._get_final_ids(info_dict, single_id=)
         '''
 
-        print(v_ids)
-        print(ydl_opts)
+        #print(v_ids)
+        #print(ydl_opts)
 
         if self.do_threading:
             # TODO: THREADING LIMIT (Add the next thread as each is finished)
@@ -107,18 +108,24 @@ class YtDownloader:
             self._download(v_ids, ydl_opts)
 
         if self.error_log:
+            print("Logging errors")
             self.write_errors()
             self.logger.errors.clear()
 
     def _download(self, v_ids, ydl_opts):
         for v_id in v_ids:
-            #self.dl_info.hook_data[v_id] = {"status": "Initializing..."}
-            self.table_data[v_id] = {"status": "Initializing..."}
-            self.table_signal.emit(self.table_data)  # When download finished, set finished?
+            self.dl_info.hook_data[v_id] = {"status": "Initializing..."}
+            #self.table_data[v_id] = {"status": "Initializing..."}
+            #self.table_signal.emit(self.table_data)  # When download finished, set finished?
 
-        #try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download(v_ids)
+
+        for v_id in v_ids:
+            if v_id not in self.dl_info.hook_data:
+                continue
+            self.dl_info.hook_data[v_id]["status"] = "Done"
+        
         if not self.download_archive:
             return
         if not self.do_threading:
@@ -128,10 +135,8 @@ class YtDownloader:
         self.write_download(v_ids)
         self.thread_locker.release()
 
-        #except Exception as e:
-            #raise Exception(e)
-            #print(f"Downloader exception: {e}")
-            #return False
+
+        
 
     def get_nonarchived(self, info_dict, single_id=None):
         '''
@@ -161,27 +166,21 @@ class YtDownloader:
 
     # Write video ids to download archive (not compatible with yt-dlp archiving)
     def write_download(self, ids):
-        #try:
         with open(self.download_archive, "a") as d_file:
             for v_id in ids:
                 d_file.writelines(f"{v_id}\n")
                 print(f"[info] Downloads written to {self.download_archive}")
-        #except Exception as e:
-            #raise Exception(e)
-            #print(f"Download archive exception: {e}")
+
 
     # Write download errors to error log
     def write_errors(self):
-        #try:
         n_errs = len(self.logger.errors)
         if n_errs < 1:
+            print(f"[info] No errors during download - skip writing to file")
             return
         with open(self.error_log, "a") as err_file:
             err_file.writelines(self.logger.errors)
             print(f"[info] {n_errs} errors written to {self.error_log}")
-        #except Exception as e:
-        #    raise Exception(e)
-            #print(f"Error log exception: {e}")
 
     # Get options for downloader
     def get_options(self):
@@ -235,23 +234,17 @@ class YtDownloader:
     def get_info(self):
 
         ydl_opts = {
-            #"extract_flat": "in_playlist",
-            "extract_flat": True,
+            "extract_flat": "in_playlist",
+            #"extract_flat": True,
             "logger": self.logger,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            #try:
             info_dict = ydl.extract_info(self.url, download=False)
             if not info_dict:
                 raise Exception("No info could be gathered.")
             return info_dict
 
-            
-            #except Exception as e:
-            #    raise Exception(e)
-                #print(f"Info extraction error: {e}")
-                #return False
 
     def hook_valid(self, hook, postprocess=False):
         if postprocess and "postprocessor" not in hook:
@@ -271,21 +264,36 @@ class YtDownloader:
             title = hook["info_dict"]["title"]
             hook["title"] = title
             v_id = hook["info_dict"]["id"]
-            hook["status"] = hook["status"].capitalize()
 
-            #self.dl_info.hook_data[v_id] = hook
-            self.table_data[v_id] = hook
-            self.table_signal.emit(self.table_data)
+            '''
+            if hook["status"] == 'finished':
+                hook["status"] = 'Finished'
+                hook["doneflag"] = True
+                print('Download finished')
+            else:
+                hook["status"] = hook["status"].capitalize()
+            '''
+
+            self.dl_info.hook_data[v_id] = hook
+            #self.table_data[v_id] = hook
+            #self.table_signal.emit(self.table_data)
 
     # Set status with postprocessor info
     def pp_hook(self, hook):
         if self.hook_valid(hook, True):
             v_id = hook["info_dict"]["id"]
-            pp = hook["postprocessor"].capitalize()
-
-            #self.dl_info.hook_data[v_id]["status"] = pp
-            self.table_data[v_id] = hook
-            self.table_signal.emit(self.table_data)
+            '''
+            if hook["status"] == 'finished':
+                hook["status"] = 'Finished'
+                hook["doneflag"] = True
+                print('Postprocessor Finished')
+            else:
+                hook["status"] = hook["postprocessor"].capitalize()
+            '''
+            pp_name = hook["postprocessor"]
+            self.dl_info.hook_data[v_id]["status"] = pp_name
+            #self.table_data[v_id] = hook
+            #self.table_signal.emit(self.table_data)
 
 
 

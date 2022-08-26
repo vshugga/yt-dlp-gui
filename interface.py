@@ -35,8 +35,8 @@ class MainWindow(QMainWindow):
         self.err_signal.connect(self.display_error)
         self.table_signal.connect(self.update_table)
 
-        #self.data_refresh_thread = UpdateUIThread(self)
-        #self.data_refresh_thread.start()
+        self.data_refresh_thread = UpdateUIThread(self)
+        self.data_refresh_thread.start()
 
         self.setup_ui()
 
@@ -190,31 +190,12 @@ class MainWindow(QMainWindow):
         msg_box.setText(f"{exception}")
         msg_box.exec()
 
-    '''
-    # Updates the table and checks for downloader errors every interval
-    def get_data_task(self):
-        while True:
-            self.update_table()
-            self.get_errors()
-            sleep(self.get_data_interval)
-    '''
-
-    '''
-    def get_errors(self):
-        cur_error = self.dl_info.cur_dl_error
-        if cur_error:
-            #
-            print('Error seen')
-            self.downloader.thread_locker.acquire()
-            self.display_error(cur_error)
-            self.downloader.thread_locker.release()
-            self.dl_info.cur_dl_error = None
-    '''
-
     # Update download table
     # Give each download a row ID?
-    def update_table(self, hook_dict):
-        t_data = self.dl_info.get_table_data(hook_dict)
+    def update_table(self, hook_dict=None):
+        t_data = self.dl_info.get_table_data()
+        if not t_data:
+            return
         if len(t_data) < 1:
             return
 
