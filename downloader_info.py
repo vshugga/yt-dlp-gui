@@ -43,6 +43,13 @@ class DownloaderInfo:
         # Keys = Vid IDs, Value = video data
         self.hook_data = {}
 
+
+    def sizeof_fmt(self, num, suffix="B"):
+        for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+            if abs(num) < 1024.0:
+                return f"{num:3.1f}{unit}{suffix}"
+            num /= 1024.0
+
     # Return list of lists having row data from the current hook_data
     def get_table_data(self, hook_data=None):
         if not hook_data:
@@ -62,10 +69,15 @@ class DownloaderInfo:
                 if key not in vid_data:
                     r_data[name] = "-"
                     continue
+                if key == 'speed' or key == 'downloaded':
+                    r_data[name] = str(self.sizeof_fmt(vid_data[key]))
+                    continue
                 r_data[name] = str(vid_data[key])
 
             table_data.append(r_data)
 
+
+        # Redo the following: Make it so a dict is used to fill out the table using column names; if key missing, keep previous value (don't update)
 
         data_final = [
             [r_dict[c_name] for c_name in self.cols] for r_dict in table_data]  # Maybe change for readability

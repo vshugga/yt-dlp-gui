@@ -4,8 +4,6 @@ import downloader_info
 from threading import Thread, Lock
 import json
 
-from PyQt5.QtCore import pyqtSignal
-
 
 class YtLogger:
     def __init__(self, dl_inf_obj, err_sig):
@@ -14,10 +12,7 @@ class YtLogger:
         self.err_signal = err_sig
 
     def debug(self, msg):
-        if msg.startswith("[download]"):
-            print(msg)
-        else:
-            print(msg)
+        print(msg)
 
     def warning(self, msg):
         print(msg)
@@ -273,8 +268,10 @@ class YtDownloader:
             else:
                 hook["status"] = hook["status"].capitalize()
             '''
-
+            self.thread_locker.acquire()
             self.dl_info.hook_data[v_id] = hook
+            self.thread_locker.release()
+
             #self.table_data[v_id] = hook
             #self.table_signal.emit(self.table_data)
 
@@ -291,7 +288,11 @@ class YtDownloader:
                 hook["status"] = hook["postprocessor"].capitalize()
             '''
             pp_name = hook["postprocessor"]
+
+            self.thread_locker.acquire()
             self.dl_info.hook_data[v_id]["status"] = pp_name
+            self.thread_locker.release()
+
             #self.table_data[v_id] = hook
             #self.table_signal.emit(self.table_data)
 

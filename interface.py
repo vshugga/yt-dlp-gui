@@ -192,6 +192,8 @@ class MainWindow(QMainWindow):
 
     # Update download table
     # Give each download a row ID?
+    # Redo the following: Make it so a dict is used to fill out the table using column names; if key missing, keep previous value (don't update)
+
     def update_table(self, hook_dict=None):
         t_data = self.dl_info.get_table_data()
         if not t_data:
