@@ -1,3 +1,5 @@
+from re import sub
+
 # Holds info for QTableWidget and downloader errors
 class DownloaderInfo:
     def __init__(self):
@@ -43,12 +45,13 @@ class DownloaderInfo:
         # Keys = Vid IDs, Value = video data
         self.hook_data = {}
 
-
+    # Abbreviate bytes to float
     def sizeof_fmt(self, num, suffix="B"):
         for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
             if abs(num) < 1024.0:
                 return f"{num:3.1f}{unit}{suffix}"
             num /= 1024.0
+
 
     # Return list of lists having row data from the current hook_data
     def get_table_data(self, hook_data=None):
@@ -72,6 +75,9 @@ class DownloaderInfo:
                 if key == 'speed' or key == 'downloaded':
                     r_data[name] = str(self.sizeof_fmt(vid_data[key]))
                     continue
+                #if key == 'completion':
+                #    r_data[name] = sub("%", "", vid_data[key])
+                #    continue
                 r_data[name] = str(vid_data[key])
 
             table_data.append(r_data)

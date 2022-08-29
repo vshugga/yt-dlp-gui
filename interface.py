@@ -6,10 +6,28 @@ import qt_ui
 # from multiprocessing import Process, Lock
 from threading import Thread, Lock
 from time import sleep
+from re import sub
 from thread_manager import UpdateUIThread, DownloaderThread
 import sys
 import downloader
 import downloader_info
+
+
+class ProgressDelegate(QtWidgets.QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        
+        progress = index.data(QtCore.Qt.UserRole+1000)
+        if progress is None:
+            return
+        
+        opt = QtWidgets.QStyleOptionProgressBar()
+        opt.rect = option.rect
+        opt.minimum = 0
+        opt.maximum = 100
+        opt.progress = progress
+        opt.text = f"{progress}%"
+        opt.textVisible = True
+        QtWidgets.QApplication.style().drawControl(QtWidgets.QStyle.CE_ProgressBar, opt, painter)
 
 
 class MainWindow(QMainWindow):
@@ -37,6 +55,12 @@ class MainWindow(QMainWindow):
 
         self.data_refresh_thread = UpdateUIThread(self)
         self.data_refresh_thread.start()
+
+
+        #Test for tablewidget progressbar: Row number may need changed
+        delegate = ProgressDelegate(self.downloadTable)
+        self.downloadTable.setItemDelegateForColumn(1, delegate)
+        
 
         self.setup_ui()
 
@@ -205,7 +229,11 @@ class MainWindow(QMainWindow):
 
         for r, row in enumerate(t_data):
             for c, col_str in enumerate(row):
-                item = QtWidgets.QTableWidgetItem(col_str)
+                if c == 1 and col_str != '-': # Need to figure out why it isn't displaying progress bar
+                    item = QtWidgets.QTableWidgetItem()
+                    item.setData(QtCore.Qt.UserRole+1000, int(float(sub("%", "", col_str))))
+                else:
+                    item = QtWidgets.QTableWidgetItem(col_str)
                 self.downloadTable.setItem(r, c, item)
 
 
