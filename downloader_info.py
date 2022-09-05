@@ -29,7 +29,7 @@ class DownloaderInfo:
             "completion": "_percent_str",
         }
 
-        # Don't overwrite these columns with hyphens
+        # Don't overwrite these columns with hyphens (not being used)
         '''
         self.hyphen_exclusion = [
             'title',
@@ -72,12 +72,9 @@ class DownloaderInfo:
                 if key not in vid_data:
                     r_data[name] = "-"
                     continue
-                if key == 'speed' or key == 'downloaded':
+                if key == 'speed' or key == 'downloaded_bytes':
                     r_data[name] = str(self.sizeof_fmt(vid_data[key]))
                     continue
-                #if key == 'completion':
-                #    r_data[name] = sub("%", "", vid_data[key])
-                #    continue
                 r_data[name] = str(vid_data[key])
 
             table_data.append(r_data)
@@ -88,3 +85,4 @@ class DownloaderInfo:
         data_final = [
             [r_dict[c_name] for c_name in self.cols] for r_dict in table_data]  # Maybe change for readability
         return data_final
+

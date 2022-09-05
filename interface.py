@@ -45,10 +45,8 @@ class MainWindow(QMainWindow):
         #self.downloader_thread = DownloaderThread(self)
         self.format_box_disabled = [0, 1, 10]
 
-        # Possibly start/control with downloads (don't update when not downloading)
-        self.refresh_interval = 0.1
-        #data_refresher = Thread(target=self.get_data_task)
-        #data_refresher.start()
+        # Possibly don't update when not downloading
+        self.refresh_interval = 0.05 # Changing to 0.01 possibly causes segfault?
 
         self.err_signal.connect(self.display_error)
         self.table_signal.connect(self.update_table)
@@ -229,7 +227,7 @@ class MainWindow(QMainWindow):
 
         for r, row in enumerate(t_data):
             for c, col_str in enumerate(row):
-                if c == 1 and col_str != '-': # Need to figure out why it isn't displaying progress bar
+                if c == 1 and col_str != '-':
                     item = QtWidgets.QTableWidgetItem()
                     item.setData(QtCore.Qt.UserRole+1000, int(float(sub("%", "", col_str))))
                 else:
