@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
         
         self.dl_info = downloader_info.DownloaderInfo()
         self.downloader = downloader.YtDownloader(self.dl_info, self.err_signal, self.table_signal)
-        #self.downloader_thread = DownloaderThread(self)
+        self.downloader_thread = DownloaderThread(self)
         self.format_box_disabled = [0, 1, 10]
 
         # Possibly don't update when not downloading
@@ -54,12 +54,10 @@ class MainWindow(QMainWindow):
         self.data_refresh_thread = UpdateUIThread(self)
         self.data_refresh_thread.start()
 
-
         #Test for tablewidget progressbar: Row number may need changed
         delegate = ProgressDelegate(self.downloadTable)
         self.downloadTable.setItemDelegateForColumn(1, delegate)
         
-
         self.setup_ui()
 
         
@@ -109,12 +107,16 @@ class MainWindow(QMainWindow):
         # Check if query, assign url accordingly
         if self.queryBox.isChecked():
             self.downloader.is_query = True
-            query_str = f"ytsearch:\"{self.downloader.url}\""
+            query_str = f'ytsearch:"{self.downloader.url}"'
             self.downloader.url = query_str
-            print(self.downloader.url)
+            print('querybox:' + self.downloader.url)
+
         else:
             self.downloader.is_query = False
             
+        print('outside:' + self.downloader.url)
+
+        
         try:
             fformat, ex_audio = self.get_format_item()  
             if ex_audio:
@@ -128,8 +130,11 @@ class MainWindow(QMainWindow):
                 self.downloader.extract_audio = False
                 # self.downloader.preferredquality = something
 
-            self.downloader.start_download_thread()
-            #self.downloader_thread.start()
+            #self.downloader.start_download_thread()
+
+            print('before thread:' + self.downloader.url)
+
+            self.downloader_thread.start()
             self.urlInput.clear()
 
         except Exception as e:

@@ -55,23 +55,52 @@ class YtDownloader:
         self.embed_subtitle = False
         self.convert_video = ''
 
-
+    '''
     def start_download_thread(self):
         d_thread = Thread(target=self._prep_download)
         d_thread.start()
+    '''
 
-    def _prep_download(self):
+    def _prep_download(self, caller_thread):
         if not self.url:
             self.logger.error("No URL provided.")
+            #del caller_thread
             return 
+        print("download prep:" + self.url)
 
         ydl_opts = self.get_options()  # Do this first to prevent new thread from overwriting
-        v_ids = [self.url]
+        v_ids = self.get_vid_ids()
+
+        if self.do_threading:
+            # TODO: THREADING LIMIT (Add the next thread as each is finished)
+            threads = [
+                Thread(target=self._download, args=([v_id], ydl_opts))
+                for v_id in v_ids
+            ]
+            for th in threads:
+                th.start()
+            for th in threads:
+                th.join()
+        else:
+            self._download(v_ids_final, ydl_opts)
+
+        if self.error_log:
+            print("Logging errors")
+            self.write_errors()
+            self.logger.errors.clear()
+
+
+    # Returns the video id/url(s) that will be downloaded based on self.url
+    def get_vid_ids(self):
         info_dict = None
+        v_ids = [self.url]
 
         if self.is_query:
             info_dict = self.get_info()
             v_ids = [info_dict["id"]]
+            if '_type' in info_dict:
+                if info_dict['_type'] == 'playlist':
+                    self.is_playlist = True
 
         if self.is_playlist:
             if not info_dict:
@@ -91,27 +120,8 @@ class YtDownloader:
                 self.logger.error(f'{v_id} is already being downloaded.')
                 continue
             v_ids_final.append(v_id)
-
-
-        if self.do_threading:
-            # TODO: THREADING LIMIT (Add the next thread as each is finished)
-            threads = [
-                Thread(target=self._download, args=([v_id], ydl_opts))
-                for v_id in v_ids_final
-            ]
-            for th in threads:
-                th.start()
-            for th in threads:
-                th.join()
-        else:
-            self._download(v_ids_final, ydl_opts)
-
-        if self.error_log:
-            print("Logging errors")
-            self.write_errors()
-            self.logger.errors.clear()
-
-
+        
+        return v_ids_final
 
     def _download(self, v_ids, ydl_opts):        
         for v_id in v_ids:
@@ -209,7 +219,7 @@ class YtDownloader:
         '''
         if self.convert_video:
             pps.append({"key": "FFmpegVideoRemuxer",
-                        "preferedformat": self.convert_video,
+                        "preferredformat": self.convert_video,
             })
         
         if self.add_metadata:
