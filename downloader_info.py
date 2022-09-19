@@ -45,6 +45,10 @@ class DownloaderInfo:
         # Keys = Vid IDs, Value = video data
         self.hook_data = {}
 
+        # Keys Vid IDs, Values = # of duplicates (1 means its unique)
+        self.duplicates = {}
+    
+
     # Abbreviate bytes to float
     def sizeof_fmt(self, num, suffix="B"):
         for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:

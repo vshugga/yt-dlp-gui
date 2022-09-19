@@ -36,6 +36,7 @@ class YtDownloader:
         self.table_signal = table_sig
         self.table_data = {}
         self.is_playlist = False
+        self.is_query = False
 
         # YoutubeDL Options
         self.ignore_errors = True
@@ -107,11 +108,17 @@ class YtDownloader:
             self.write_errors()
             self.logger.errors.clear()
 
-    def _download(self, v_ids, ydl_opts):
+    def _download(self, v_ids, ydl_opts):        
         for v_id in v_ids:
-            self.dl_info.hook_data[v_id] = {"status": "Initializing..."}
+            # Handle duplicate filenames
+            table_id = self.get_table_id(v_id)
+            self.dl_info.hook_data[table_id] = {"status": "Initializing..."}
+
             #self.table_data[v_id] = {"status": "Initializing..."}
             #self.table_signal.emit(self.table_data)  # When download finished, set finished?
+
+
+
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download(v_ids)
@@ -227,7 +234,6 @@ class YtDownloader:
 
     # Get video/playlist information
     def get_info(self):
-
         ydl_opts = {
             "extract_flat": "in_playlist",
             #"extract_flat": True,
@@ -240,6 +246,13 @@ class YtDownloader:
                 raise Exception("No info could be gathered.")
             return info_dict
 
+    # Returns the v_id that should be used in table - handles duplicate entries
+    def get_table_id(self, v_id):
+        new_id = v_id
+        while new_id in self.dl_info.hook_data:
+            new_id + "_"
+        return new_id
+        
 
     def hook_valid(self, hook, postprocess=False):
         if postprocess and "postprocessor" not in hook:
@@ -255,46 +268,38 @@ class YtDownloader:
 
     # Set table info with download info, set title
     def dl_hook(self, hook):
-        if self.hook_valid(hook):
-            title = hook["info_dict"]["title"]
-            hook["title"] = title
-            v_id = hook["info_dict"]["id"]
+        if not self.hook_valid(hook):
+            return 
+        title = hook["info_dict"]["title"]
+        hook["title"] = title
+        v_id = hook["info_dict"]["id"]
 
-            '''
-            if hook["status"] == 'finished':
-                hook["status"] = 'Finished'
-                hook["doneflag"] = True
-                print('Download finished')
-            else:
-                hook["status"] = hook["status"].capitalize()
-            '''
-            self.thread_locker.acquire()
-            self.dl_info.hook_data[v_id] = hook
-            self.thread_locker.release()
 
-            #self.table_data[v_id] = hook
-            #self.table_signal.emit(self.table_data)
+
+        # Make sure duplicate videos are not overwritten in table (THIS NEEDS MORE WORK)
+        #if "first_flag" not in self.dl_info.hook_data['v_id']:
+        #    hook["first_flag"] = True
+        #    new_id = self.get_table_id(v_id)
+
+
+        self.thread_locker.acquire()
+        self.dl_info.hook_data[v_id] = hook
+        self.thread_locker.release()
+        #self.table_data[v_id] = hook
+        #self.table_signal.emit(self.table_data)
 
     # Set status with postprocessor info
     def pp_hook(self, hook):
-        if self.hook_valid(hook, True):
-            v_id = hook["info_dict"]["id"]
-            '''
-            if hook["status"] == 'finished':
-                hook["status"] = 'Finished'
-                hook["doneflag"] = True
-                print('Postprocessor Finished')
-            else:
-                hook["status"] = hook["postprocessor"].capitalize()
-            '''
-            pp_name = hook["postprocessor"]
-
-            self.thread_locker.acquire()
-            self.dl_info.hook_data[v_id]["status"] = pp_name
-            self.thread_locker.release()
-
-            #self.table_data[v_id] = hook
-            #self.table_signal.emit(self.table_data)
+        if not self.hook_valid(hook, True):
+            return 
+        v_id = hook["info_dict"]["id"]
+      
+        pp_name = hook["postprocessor"]
+        self.thread_locker.acquire()
+        self.dl_info.hook_data[v_id]["status"] = pp_name
+        self.thread_locker.release()
+        #self.table_data[v_id] = hook
+        #self.table_signal.emit(self.table_data)
 
 
 

@@ -105,7 +105,16 @@ class MainWindow(QMainWindow):
         self.downloader.url = self.urlInput.text()
         self.downloader.song_path = self.pathInput.text()
         self.downloader.is_playlist = self.plistBox.isChecked()
-
+        
+        # Check if query, assign url accordingly
+        if self.queryBox.isChecked():
+            self.downloader.is_query = True
+            query_str = f"ytsearch:\"{self.downloader.url}\""
+            self.downloader.url = query_str
+            print(self.downloader.url)
+        else:
+            self.downloader.is_query = False
+            
         try:
             fformat, ex_audio = self.get_format_item()  
             if ex_audio:
