@@ -73,7 +73,7 @@ class YtDownloader:
         if self.skip_archived and self.download_archive:
             if not info_dict:
                 info_dict = self.get_info()
-            v_ids = self.get_nonarchived(info_dict)
+            v_ids = self.get_nonarchived(info_dict, v_ids)
         
         '''
         info_dict = {}
@@ -117,9 +117,6 @@ class YtDownloader:
             #self.table_data[v_id] = {"status": "Initializing..."}
             #self.table_signal.emit(self.table_data)  # When download finished, set finished?
 
-
-
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download(v_ids)
 
@@ -140,7 +137,7 @@ class YtDownloader:
 
         
 
-    def get_nonarchived(self, info_dict, single_id=None):
+    def get_nonarchived(self, info_dict, v_ids):
         '''
         if single_id:
             v_ids = [single_id]
@@ -149,13 +146,13 @@ class YtDownloader:
         else:
             v_ids = [entry["id"] for entry in info_dict["entries"]]
         '''
-        v_ids = [entry["id"] for entry in info_dict["entries"]]
             
         ids_final = []
         with open(self.download_archive, "r") as d_file:
             d_list = d_file.readlines()
+            extractor = info_dict["extractor"]
         for v_id in v_ids:
-            if f"{v_id}\n" in d_list:
+            if f"{extractor} {v_id}\n" in d_list:
                 print(f"[info] ID: {v_id} already recorded in the archive")
                 continue
             ids_final.append(v_id)
@@ -170,7 +167,8 @@ class YtDownloader:
     def write_download(self, ids):
         with open(self.download_archive, "a") as d_file:
             for v_id in ids:
-                d_file.writelines(f"{v_id}\n")
+                extractor = self.dl_info.hook_data[v_id]['info_dict']['extractor']
+                d_file.writelines(f"{extractor} {v_id}\n")
                 print(f"[info] Downloads written to {self.download_archive}")
 
 
