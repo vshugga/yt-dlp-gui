@@ -61,12 +61,21 @@ class YtDownloader:
         d_thread.start()
 
     def _prep_download(self):
+        if not self.url:
+            self.logger.error("No URL provided.")
+            return 
+
         ydl_opts = self.get_options()  # Do this first to prevent new thread from overwriting
         v_ids = [self.url]
         info_dict = None
 
-        if self.is_playlist:
+        if self.is_query:
             info_dict = self.get_info()
+            v_ids = [info_dict["id"]]
+
+        if self.is_playlist:
+            if not info_dict:
+                info_dict = self.get_info()
             if "entries" in info_dict:
                 v_ids = [entry["id"] for entry in info_dict["entries"]]
 
@@ -74,39 +83,35 @@ class YtDownloader:
             if not info_dict:
                 info_dict = self.get_info()
             v_ids = self.get_nonarchived(info_dict, v_ids)
-        
-        '''
-        info_dict = {}
-        if self.is_playlist: 
-            info_dict = self.get_info()
-            if not info_dict:
-                raise Exception("No urls returned by get_info!")
-                return
-            ids_final = self._get_final_ids(info_dict)
-        else:
-            ids_final = self._get_final_ids(info_dict, single_id=)
-        '''
 
-        #print(v_ids)
-        #print(ydl_opts)
+        # Handle duplicate entries
+        v_ids_final = []
+        for v_id in v_ids:
+            if v_id in self.dl_info.hook_data:
+                self.logger.error(f'{v_id} is already being downloaded.')
+                continue
+            v_ids_final.append(v_id)
+
 
         if self.do_threading:
             # TODO: THREADING LIMIT (Add the next thread as each is finished)
             threads = [
                 Thread(target=self._download, args=([v_id], ydl_opts))
-                for v_id in v_ids
+                for v_id in v_ids_final
             ]
             for th in threads:
                 th.start()
             for th in threads:
                 th.join()
         else:
-            self._download(v_ids, ydl_opts)
+            self._download(v_ids_final, ydl_opts)
 
         if self.error_log:
             print("Logging errors")
             self.write_errors()
             self.logger.errors.clear()
+
+
 
     def _download(self, v_ids, ydl_opts):        
         for v_id in v_ids:
@@ -116,6 +121,7 @@ class YtDownloader:
 
             #self.table_data[v_id] = {"status": "Initializing..."}
             #self.table_signal.emit(self.table_data)  # When download finished, set finished?
+        
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download(v_ids)
